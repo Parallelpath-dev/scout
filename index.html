@@ -321,7 +321,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:13px
       <div class="page-sub">Ad spend estimates and paid keyword landscape across competitors</div>
       <div class="card">
         <div class="card-header">
-          <div><div class="card-eyebrow">Paid Landscape</div><div class="card-title">Paid Keyword Volume by Competitor</div><div class="card-sub">Semrush paid keyword data · week of Mar 18</div></div>
+          <div><div class="card-eyebrow">Paid Landscape</div><div class="card-title">Paid Keyword Count by Competitor</div><div class="card-sub">Semrush estimated paid keyword count · 12-week trend</div></div>
           <div class="legend">
             <div class="legend-item"><div class="legend-dot" style="background:#8CBEC6"></div>Mattress Firm</div>
             <div class="legend-item"><div class="legend-dot" style="background:#E1885E"></div>Sleep Number</div>
@@ -497,6 +497,46 @@ function renderOrganic(data) {
     return `<tr><td><span class="kw">${row.keyword}</span></td><td>${vol}</td><td>${mwBadge}</td>${compCells}</tr>`;
   }).join('');
 }
+function renderPaid(data) {
+  if (!data?.paidTrend) return;
+  const colors = {
+    'Mattress Firm': '#8CBEC6',
+    'Sleep Number': '#E1885E',
+    'Purple': '#DCBE4C',
+    'Casper': '#C6EB4C',
+  };
+  const competitors = Object.keys(data.paidTrend);
+  const datasets = competitors.map(name => {
+    const points = [...(data.paidTrend[name] || [])].reverse();
+    return {
+      label: name,
+      data: points.map(p => p.adwords_keywords),
+      borderColor: colors[name] || '#8fb0b5',
+      backgroundColor: 'transparent',
+      tension: 0.4,
+      pointRadius: 3,
+      borderWidth: 2,
+    };
+  });
+  const labels = [...(data.paidTrend[competitors[0]] || [])].reverse().map(p =>
+    new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  );
+  const el = document.getElementById('paidChart');
+  if (!el) return;
+  new Chart(el, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { boxWidth: 10, font: { size: 10 } } } },
+      scales: {
+        x: { grid: { color: 'rgba(246,237,230,0.05)' }, ticks: { maxTicksLimit: 8 } },
+        y: { grid: { color: 'rgba(246,237,230,0.05)' }, ticks: { callback: v => v.toLocaleString() } }
+      }
+    }
+  });
+}
 
 function renderContentWeb(data) {
   // Only render Claude-synthesized content signals — web changes go to All Signals tab only
@@ -631,7 +671,7 @@ function initCharts(pageId) {
     loadScoutData();
   }
   if (pageId==='paid') {
-    mk('paidChart',{type:'bar',data:{labels:['Mattress Firm','Sleep Number','Purple','Casper'],datasets:[{data:[25,18,12,9],backgroundColor:['rgba(139,190,198,0.8)','rgba(225,136,94,0.75)','rgba(220,190,76,0.7)','rgba(198,235,76,0.65)'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(246,237,230,0.05)'},ticks:{callback:v=>v+' kw'}}}}});
+    renderPaid(window._scoutData);
   }
   if (pageId==='trends') {
     const td=Array.from({length:13},(_,i)=>{const d=new Date('2025-12-22');d.setDate(d.getDate()+i*7);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});});
