@@ -2,13 +2,9 @@
 Scout — Semrush Collector
 Pulls keyword, traffic, and competitor data from Semrush API
 and stores it in Supabase.
-
-Free tier: 10 API units/day (manual exports bypass this limit)
-Paid: Use API key from Semrush account settings
 """
 
 import os
-import json
 import requests
 from datetime import datetime, date
 from supabase import create_client, Client
@@ -46,8 +42,8 @@ def get_domain_overview(domain: str) -> dict:
     return dict(zip(headers, values))
 
 
-def get_organic_keywords(domain: str, limit: int = 50) -> list[dict]:
-    """Get top organic keywords for a domain."""
+def get_organic_keywords(domain: str, limit: int = 50, brand_terms: list = None) -> list[dict]:
+    """Get top organic keywords for a domain, filtering brand terms if provided."""
     params = {
         "type": "domain_organic",
         "key": SEMRUSH_API_KEY,
@@ -65,10 +61,20 @@ def get_organic_keywords(domain: str, limit: int = 50) -> list[dict]:
         return []
 
     headers = lines[0].split(";")
-    return [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
+    keywords = [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
+
+    # Filter brand terms if provided
+    if brand_terms:
+        brand_terms_lower = [t.lower() for t in brand_terms]
+        keywords = [
+            kw for kw in keywords
+            if not any(bt in kw.get("Ph", "").lower() for bt in brand_terms_lower)
+        ]
+
+    return keywords
 
 
-def get_paid_keywords(domain: str, limit: int = 25) -> list[dict]:
+def get_paid_keywords(domain: str, limit: int = 100) -> list[dict]:
     """Get paid search keywords for a domain."""
     params = {
         "type": "domain_adwords",
@@ -90,27 +96,53 @@ def get_paid_keywords(domain: str, limit: int = 25) -> list[dict]:
     return [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
 
 
-def get_keyword_overlap(domain1: str, domain2: str) -> dict:
-    """Get keyword overlap between two domains."""
-    params = {
-        "type": "domain_organic_organic",
-        "key": SEMRUSH_API_KEY,
-        "domains[0]": domain1,
-        "domains[1]": domain2,
-        "database": "us",
-        "export_columns": "Ph,Po,Pp,Nq,Co",
-        "display_limit": 100,
-    }
-    resp = requests.get(SEMRUSH_BASE, params=params)
-    resp.raise_for_status()
+def get_keyword_positions(domain: str, keywords: list[str]) -> list[dict]:
+    """
+    For each tracked keyword, get the position that a given domain holds.
+    Uses phrase_organic endpoint — one call per keyword.
+    Returns a list of {keyword, position, volume, url} dicts.
+    """
+    results = []
+    for kw in keywords:
+        try:
+            params = {
+                "type": "phrase_organic",
+                "key": SEMRUSH_API_KEY,
+                "phrase": kw,
+                "database": "us",
+                "display_limit": 20,
+                "export_columns": "Dn,Po,Nq,Cp,Ur",
+            }
+            resp = requests.get(SEMRUSH_BASE, params=params)
+            resp.raise_for_status()
 
-    lines = resp.text.strip().split("\n")
-    if len(lines) < 2:
-        return {"keywords": []}
+            lines = resp.text.strip().split("\n")
+            if len(lines) < 2:
+                results.append({"keyword": kw, "position": None, "volume": None, "url": None})
+                continue
 
-    headers = lines[0].split(";")
-    keywords = [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
-    return {"keywords": keywords, "count": len(keywords)}
+            headers = lines[0].split(";")
+            rows = [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
+
+            # Find this domain in the results
+            match = next((r for r in rows if domain.lower().replace("www.", "") in r.get("Dn", "").lower()), None)
+
+            if match:
+                results.append({
+                    "keyword": kw,
+                    "position": int(match.get("Po", 0)) if match.get("Po", "").isdigit() else None,
+                    "volume": int(match.get("Nq", 0)) if match.get("Nq", "").isdigit() else None,
+                    "url": match.get("Ur"),
+                    "domain": domain,
+                })
+            else:
+                results.append({"keyword": kw, "position": None, "volume": None, "url": None, "domain": domain})
+
+        except Exception as e:
+            print(f"[semrush]   ERROR phrase_organic for '{kw}' / {domain}: {e}")
+            results.append({"keyword": kw, "position": None, "volume": None, "url": None, "domain": domain})
+
+    return results
 
 
 # ── Supabase Storage ──────────────────────────────────────────────────────────
@@ -132,7 +164,7 @@ def get_competitor_id(client_id: str, domain: str) -> str | None:
     return result.data["id"] if result.data else None
 
 
-def save_signal(client_id: str, competitor_id: str, source: str, signal_type: str, data: dict):
+def save_signal(client_id: str, competitor_id: str | None, source: str, signal_type: str, data: dict):
     supabase.table("signals").insert({
         "client_id": client_id,
         "competitor_id": competitor_id,
@@ -159,14 +191,37 @@ def collect_for_client(client_slug: str):
     config = result.data.get("config", {})
     client_domain = config.get("domain")
     competitors = config.get("competitors", [])
+    tracked_keywords = config.get("tracked_keywords", [])
 
     if not client_domain:
         print(f"[semrush] ERROR: No domain in config for '{client_slug}'")
         return
 
-    # Collect competitor data
+    # ── Client own domain overview ────────────────────────────────────────────
+    print(f"[semrush]   Collecting client domain: {client_domain}")
+    try:
+        overview = get_domain_overview(client_domain)
+        save_signal(client_id, None, "semrush", "client_domain_overview", overview)
+    except Exception as e:
+        print(f"[semrush]   ERROR client domain_overview: {e}")
+
+    # ── Client keyword positions for tracked keywords ─────────────────────────
+    if tracked_keywords:
+        print(f"[semrush]   Collecting client keyword positions for {len(tracked_keywords)} tracked terms")
+        try:
+            client_positions = get_keyword_positions(client_domain, tracked_keywords)
+            save_signal(client_id, None, "semrush", "client_keyword_positions", {
+                "domain": client_domain,
+                "keywords": client_positions,
+            })
+        except Exception as e:
+            print(f"[semrush]   ERROR client keyword positions: {e}")
+
+    # ── Competitor data ───────────────────────────────────────────────────────
     for comp in competitors:
         comp_domain = comp.get("domain")
+        comp_name = comp.get("name")
+        brand_terms = comp.get("brand_terms", [])
         comp_id = get_competitor_id(client_id, comp_domain)
 
         if not comp_id:
@@ -182,26 +237,33 @@ def collect_for_client(client_slug: str):
         except Exception as e:
             print(f"[semrush]   ERROR domain_overview: {e}")
 
-        # Organic keywords
+        # Organic keywords — filtered by brand terms
         try:
-            organic = get_organic_keywords(comp_domain)
+            organic = get_organic_keywords(comp_domain, brand_terms=brand_terms)
+            filtered_count = len(organic)
+            print(f"[semrush]   {comp_name}: {filtered_count} organic keywords after brand filter")
             save_signal(client_id, comp_id, "semrush", "organic_keywords", {"keywords": organic})
         except Exception as e:
             print(f"[semrush]   ERROR organic_keywords: {e}")
 
-        # Paid keywords
+        # Paid keywords — cap raised to 100
         try:
             paid = get_paid_keywords(comp_domain)
             save_signal(client_id, comp_id, "semrush", "paid_keywords", {"keywords": paid})
         except Exception as e:
             print(f"[semrush]   ERROR paid_keywords: {e}")
 
-        # Keyword overlap with client
-        try:
-            overlap = get_keyword_overlap(client_domain, comp_domain)
-            save_signal(client_id, comp_id, "semrush", "keyword_overlap", overlap)
-        except Exception as e:
-            print(f"[semrush]   ERROR keyword_overlap: {e}")
+        # Competitor keyword positions for tracked keywords
+        if tracked_keywords:
+            try:
+                comp_positions = get_keyword_positions(comp_domain, tracked_keywords)
+                save_signal(client_id, comp_id, "semrush", "tracked_keyword_positions", {
+                    "domain": comp_domain,
+                    "competitor": comp_name,
+                    "keywords": comp_positions,
+                })
+            except Exception as e:
+                print(f"[semrush]   ERROR tracked keyword positions: {e}")
 
     print(f"[semrush] Done: {client_slug}")
 
@@ -212,8 +274,6 @@ def import_semrush_csv(client_slug: str, competitor_domain: str, csv_path: str, 
     """
     Import a manually exported Semrush CSV into Supabase.
     Use this when API units are exhausted.
-
-    signal_type options: 'organic_keywords', 'paid_keywords', 'backlinks'
     """
     import csv
 
@@ -238,7 +298,6 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
         print("Usage: python semrush_collector.py <client_slug>")
-        print("       python semrush_collector.py apex-nutrition")
         sys.exit(1)
 
     collect_for_client(sys.argv[1])
