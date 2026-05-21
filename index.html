@@ -651,6 +651,7 @@ async function loadScoutData() {
     renderContentWeb(data);
     renderAllSignals(data);
     renderSocial(data);
+    window._scoutData = data;
     console.log('[Scout] Live data loaded — pressure:', data.pressureScore, '| signals:', data.signalCounts);
   } catch(e) {
     console.warn('[Scout] Static fallback:', e.message);
