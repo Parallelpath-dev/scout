@@ -300,7 +300,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:13px
       </div>
       <div class="card">
         <table class="data-table" id="keyword-table">
-          <thead><tr><th>Keyword</th><th>Competitor</th><th>Position</th><th>Change</th><th>Monthly Volume</th><th>Overlap</th></tr></thead>
+          <thead><tr><th>Keyword</th><th>Monthly Volume</th><th>MW Position</th><th>Mattress Firm</th><th>Sleep Number</th><th>Purple</th><th>Casper</th></tr></thead>
           <tbody id="keyword-tbody">
             <tr><td><span class="kw">mattress firm</span></td><td><span class="comp-tag">Mattress Firm</span></td><td><span class="badge good">#1</span></td><td><span class="chg flat">→ 0</span></td><td>550,000</td><td><span style="color:var(--coral);font-family:var(--fh);font-size:11px;font-weight:600">Brand overlap</span></td></tr>
             <tr><td><span class="kw">mattress stores</span></td><td><span class="comp-tag">Mattress Firm</span></td><td><span class="badge good">#2</span></td><td><span class="chg up">↑ +1</span></td><td>33,100</td><td><span style="color:var(--coral);font-family:var(--fh);font-size:11px;font-weight:600">Direct overlap</span></td></tr>
@@ -309,18 +309,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:13px
             <tr><td><span class="kw">sleep number</span></td><td><span class="comp-tag">Sleep Number</span></td><td><span class="badge good">#1</span></td><td><span class="chg flat">→ 0</span></td><td>135,000</td><td><span style="color:var(--dove);font-family:var(--fh);font-size:11px;font-weight:600">No overlap</span></td></tr>
           </tbody>
         </table>
-      </div>
-      <div class="card">
-        <div class="card-header">
-          <div><div class="card-eyebrow">Search Presence</div><div class="card-title">Estimated Organic Traffic Share</div><div class="card-sub">Based on Semrush domain overview · week of Mar 18</div></div>
-          <div class="legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#8CBEC6"></div>Mattress Firm</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#E1885E"></div>Sleep Number</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#DCBE4C"></div>Purple</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#C6EB4C"></div>Casper</div>
-          </div>
-        </div>
-        <div class="chart-h tall"><canvas id="sovChart"></canvas></div>
       </div>
     </div>
   </div>
@@ -495,11 +483,18 @@ function renderOverview(data) {
 }
 
 function renderOrganic(data) {
-  if (!data.keywordMovements?.length) return;
-  document.getElementById('keyword-tbody').innerHTML = data.keywordMovements.map(kw=>{
-    const p=kw.current_position, bc=p<=3?'good':'mid', cc=kw.position_change>0?'up':'flat', ca=kw.position_change>0?'↑ +':'→ ';
-    const oc=kw.overlap_with_client?'var(--coral)':'var(--dove)', ot=kw.overlap_with_client?'Overlaps':'No overlap';
-    return `<tr><td><span class="kw">${kw.keyword}</span></td><td><span class="comp-tag">${kw.competitor}</span></td><td><span class="badge ${bc}">#${p}</span></td><td><span class="chg ${cc}">${ca}${Math.abs(kw.position_change)}</span></td><td>${(kw.monthly_volume||0).toLocaleString()}</td><td><span style="color:${oc};font-family:var(--fh);font-size:11px;font-weight:600">${ot}</span></td></tr>`;
+  const comparison = data.keywordComparison;
+  if (!comparison?.length) return;
+  const competitors = Object.keys(comparison[0].competitor_positions || {});
+  document.getElementById('keyword-tbody').innerHTML = comparison.map(row => {
+    const mwPos = row.client_position;
+    const mwBadge = mwPos ? `<span class="badge ${mwPos <= 3 ? 'good' : 'mid'}">#${mwPos}</span>` : `<span style="color:var(--dove);font-family:var(--fh);font-size:11px">—</span>`;
+    const compCells = competitors.map(c => {
+      const pos = row.competitor_positions[c];
+      return `<td>${pos ? `<span class="badge ${pos <= 3 ? 'good' : 'mid'}">#${pos}</span>` : `<span style="color:var(--dove);font-family:var(--fh);font-size:11px">—</span>`}</td>`;
+    }).join('');
+    const vol = row.volume ? Number(row.volume).toLocaleString() : '—';
+    return `<tr><td><span class="kw">${row.keyword}</span></td><td>${vol}</td><td>${mwBadge}</td>${compCells}</tr>`;
   }).join('');
 }
 
@@ -634,9 +629,6 @@ function initCharts(pageId) {
   if (pageId==='overview') {
     pressureChartInstance = new Chart(document.getElementById('pressureChart'),{type:'line',data:{labels:weeks,datasets:[{label:'Pressure',data:[48,51,55,58,60,63,63,78],borderColor:'#E1885E',backgroundColor:'rgba(225,136,94,0.07)',fill:true,tension:0.4,pointBackgroundColor:['#8fb0b5','#8fb0b5','#8fb0b5','#8fb0b5','#8fb0b5','#8fb0b5','#8fb0b5','#E1885E'],pointRadius:[2,2,2,2,2,2,2,6],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(246,237,230,0.05)'}},y:{grid:{color:'rgba(246,237,230,0.05)'},min:0,max:100}}}});
     loadScoutData();
-  }
-  if (pageId==='organic') {
-    mk('sovChart',{type:'bar',data:{labels:['Mattress Firm','Sleep Number','Purple','Casper'],datasets:[{data:[21.88,14.2,8.4,5.1],backgroundColor:['rgba(139,190,198,0.8)','rgba(225,136,94,0.75)','rgba(220,190,76,0.7)','rgba(198,235,76,0.65)'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(246,237,230,0.05)'},ticks:{callback:v=>v+'%'}}}}});
   }
   if (pageId==='paid') {
     mk('paidChart',{type:'bar',data:{labels:['Mattress Firm','Sleep Number','Purple','Casper'],datasets:[{data:[25,18,12,9],backgroundColor:['rgba(139,190,198,0.8)','rgba(225,136,94,0.75)','rgba(220,190,76,0.7)','rgba(198,235,76,0.65)'],borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{color:'rgba(246,237,230,0.05)'},ticks:{callback:v=>v+' kw'}}}}});
