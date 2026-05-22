@@ -284,8 +284,9 @@ def collect_youtube(channel_id: str) -> dict:
         cutoff = datetime.utcnow() - timedelta(days=14)
         recent_videos = [
             v for v in videos
-            if (v.get("uploadDate") or v.get("publishedAt") or v.get("date")) and datetime.fromisoformat(
-                (v.get("uploadDate") or v.get("publishedAt") or v.get("date", "")).replace("Z", "+00:00")
+            upload_date = v.get("uploadDate") or v.get("publishedAt") or v.get("date") or v.get("upload_date") or ""
+            if upload_date and datetime.fromisoformat(
+                upload_date.replace("Z", "+00:00")
             ).replace(tzinfo=None) > cutoff
         ]
 
