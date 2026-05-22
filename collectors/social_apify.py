@@ -244,14 +244,14 @@ def collect_facebook_ads(competitor_name: str) -> dict:
         ads = []
         for ad in results[:20]:
             ads.append({
-                "ad_id": ad.get("adArchiveID") or ad.get("id"),
-                "page_name": ad.get("pageName"),
-                "ad_creative_body": (ad.get("snapshot", {}).get("body", {}).get("text", "") or "")[:300],
-                "ad_creative_link_title": ad.get("snapshot", {}).get("title", ""),
-                "start_date": ad.get("startDate"),
-                "end_date": ad.get("endDate"),
-                "formats": ad.get("publisherPlatform", []),
-                "is_active": ad.get("isActive", True),
+                "ad_id": ad.get("ad_id") or ad.get("adArchiveID"),
+                "page_name": ad.get("page_name") or ad.get("pageName"),
+                "ad_creative_body": (ad.get("ad_text") or ad.get("snapshot", {}).get("body", {}).get("text", "") or "")[:300],
+                "ad_creative_link_title": ad.get("cta_text") or ad.get("snapshot", {}).get("title", ""),
+                "start_date": ad.get("start_date") or ad.get("startDate"),
+                "end_date": ad.get("end_date") or ad.get("endDate"),
+                "formats": ad.get("platforms") or ad.get("publisherPlatform", []),
+                "is_active": ad.get("status") == "active" if ad.get("status") else ad.get("isActive", True),
             })
 
         active_ads = [a for a in ads if a.get("is_active")]
