@@ -145,7 +145,7 @@ def collect_tiktok(handle: str) -> dict:
     """Collect TikTok profile metrics and recent posts."""
     try:
         results = run_actor("clockworks/tiktok-scraper", {
-            "profiles": [handle],
+            "profiles": [f"https://www.tiktok.com/@{handle}"],
             "resultsPerPage": 20,
             "shouldDownloadVideos": False,
             "shouldDownloadCovers": False,
@@ -155,13 +155,15 @@ def collect_tiktok(handle: str) -> dict:
             return {}
 
         # Separate profile from posts
-        profile_data = next((r for r in results if r.get("type") == "user"), {})
-        posts = [r for r in results if r.get("type") == "video"][:20]
+        profile_data = {}
+        posts = results[:20]
 
         cutoff = datetime.utcnow() - timedelta(days=30)
         recent_posts = [
             p for p in posts
-            if p.get("createTime") and datetime.utcfromtimestamp(int(float(str(p["createTime"])))) > cutoff
+            if p.get("createTimeISO") and datetime.fromisoformat(
+                p["createTimeISO"].replace("Z", "+00:00")
+            ).replace(tzinfo=None) > cutoff
         ]
 
         avg_views = sum(p.get("playCount", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
@@ -226,13 +228,12 @@ def collect_facebook_posts(page_name: str) -> dict:
         return {}
 
 
-def collect_facebook_ads(competitor_name: str) -> dict:
+def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
     """Scrape Meta Ads Library for active competitor ads."""
     try:
-        results = run_actor("curious_coder/facebook-ads-library-scraper", {
-            "searchTerms": competitor_name,
-            "country": "US",
-            "maxAds": 20,
+       results = run_actor("curious_coder/facebook-ads-library-scraper", {
+            "startUrls": [{"url": meta_ads_url}],
+            "maxResults": 20,
         })
 
         if not results:
@@ -278,13 +279,13 @@ def collect_youtube(channel_id: str) -> dict:
             return {}
 
         # Separate channel from videos
-        channel = next((r for r in results if r.get("type") == "channel"), {})
-        videos = [r for r in results if r.get("type") == "video"][:20]
+        channel = {}
+        videos = results[:20]
 
         cutoff = datetime.utcnow() - timedelta(days=14)
         recent_videos = []
         for v in videos:
-            upload_date = v.get("uploadDate") or v.get("publishedAt") or v.get("date") or v.get("upload_date") or ""
+            upload_date = v.get("date") or v.get("uploadDate") or v.get("publishedAt") or ""
             if upload_date:
                 try:
                     if datetime.fromisoformat(upload_date.replace("Z", "+00:00")).replace(tzinfo=None) > cutoff:
@@ -397,7 +398,7 @@ def collect_for_client(client_slug: str):
                 print(f"[apify]   Facebook: {data.get('posts_last_30d')} posts last 30d")
 
         # Meta Ads Library
-        data = collect_facebook_ads(name)
+        data = collect_facebook_ads(name, comp.get("meta_ads_url", "")) if comp.get("meta_ads_url") else None
         if data:
             save_signal(client_id, comp_id, "meta_ads", data)
             print(f"[apify]   Meta Ads: {data.get('total_active_ads')} active ads")
