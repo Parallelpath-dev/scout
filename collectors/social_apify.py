@@ -161,7 +161,7 @@ def collect_tiktok(handle: str) -> dict:
         cutoff = datetime.utcnow() - timedelta(days=30)
         recent_posts = [
             p for p in posts
-            if p.get("createTime") and datetime.utcfromtimestamp(int(p["createTime"])) > cutoff
+            if p.get("createTime") and datetime.utcfromtimestamp(int(float(str(p["createTime"])))) > cutoff
         ]
 
         avg_views = sum(p.get("playCount", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
@@ -229,13 +229,10 @@ def collect_facebook_posts(page_name: str) -> dict:
 def collect_facebook_ads(competitor_name: str) -> dict:
     """Scrape Meta Ads Library for active competitor ads."""
     try:
-        results = run_actor("crawlerbros/facebook-ads-scraper-pro", {
-            "searchTerms": [competitor_name],
+        results = run_actor("curious_coder/facebook-ads-library-scraper", {
+            "searchTerms": competitor_name,
             "country": "US",
-            "adActiveStatus": "active",
-            "adType": "all",
-            "mediaType": "all",
-            "resultsPerSearch": 20,
+            "maxAds": 20,
         })
 
         if not results:
@@ -287,8 +284,8 @@ def collect_youtube(channel_id: str) -> dict:
         cutoff = datetime.utcnow() - timedelta(days=14)
         recent_videos = [
             v for v in videos
-            if v.get("uploadDate") and datetime.fromisoformat(
-                v["uploadDate"].replace("Z", "+00:00")
+            if (v.get("uploadDate") or v.get("publishedAt") or v.get("date")) and datetime.fromisoformat(
+                (v.get("uploadDate") or v.get("publishedAt") or v.get("date", "")).replace("Z", "+00:00")
             ).replace(tzinfo=None) > cutoff
         ]
 
