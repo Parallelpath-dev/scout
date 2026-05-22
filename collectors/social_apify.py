@@ -38,7 +38,7 @@ def run_actor(actor_id: str, input_data: dict, timeout_secs: int = 120) -> list:
 
     # Start the actor run
     resp = requests.post(
-        f"{APIFY_BASE}/acts/{actor_id}/runs",
+        f"{APIFY_BASE}/acts/{actor_id.replace('/', '~')}/runs",
         headers={"Authorization": f"Bearer {APIFY_API_KEY}"},
         json=input_data,
         params={"timeout": timeout_secs, "memory": 256},
