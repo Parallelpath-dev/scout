@@ -282,13 +282,15 @@ def collect_youtube(channel_id: str) -> dict:
         videos = [r for r in results if r.get("type") == "video"][:20]
 
         cutoff = datetime.utcnow() - timedelta(days=14)
-        recent_videos = [
-            v for v in videos
+        recent_videos = []
+        for v in videos:
             upload_date = v.get("uploadDate") or v.get("publishedAt") or v.get("date") or v.get("upload_date") or ""
-            if upload_date and datetime.fromisoformat(
-                upload_date.replace("Z", "+00:00")
-            ).replace(tzinfo=None) > cutoff
-        ]
+            if upload_date:
+                try:
+                    if datetime.fromisoformat(upload_date.replace("Z", "+00:00")).replace(tzinfo=None) > cutoff:
+                        recent_videos.append(v)
+                except ValueError:
+                    pass
 
         top_video = max(videos, key=lambda v: v.get("viewCount", 0)) if videos else {}
 
