@@ -95,7 +95,7 @@ def collect_instagram(handle: str) -> dict:
     """Collect Instagram profile metrics and recent posts."""
     try:
         results = run_actor("apify/instagram-scraper", {
-            "usernames": [handle],
+            "directUrls": [f"https://www.instagram.com/{handle}/"],
             "resultsType": "posts",
             "resultsLimit": 20,
             "addParentData": True,
@@ -161,9 +161,7 @@ def collect_tiktok(handle: str) -> dict:
         cutoff = datetime.utcnow() - timedelta(days=30)
         recent_posts = [
             p for p in posts
-            if p.get("createTimeISO") and datetime.fromisoformat(
-                p["createTimeISO"].replace("Z", "+00:00")
-            ).replace(tzinfo=None) > cutoff
+            if p.get("createTime") and datetime.utcfromtimestamp(int(p["createTime"])) > cutoff
         ]
 
         avg_views = sum(p.get("playCount", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
@@ -231,11 +229,13 @@ def collect_facebook_posts(page_name: str) -> dict:
 def collect_facebook_ads(competitor_name: str) -> dict:
     """Scrape Meta Ads Library for active competitor ads."""
     try:
-        results = run_actor("apify/facebook-ads-scraper", {
+        results = run_actor("crawlerbros/facebook-ads-scraper-pro", {
             "searchTerms": [competitor_name],
-            "adType": "all",
             "country": "US",
-            "resultsLimit": 20,
+            "adActiveStatus": "active",
+            "adType": "all",
+            "mediaType": "all",
+            "resultsPerSearch": 20,
         })
 
         if not results:
@@ -287,8 +287,8 @@ def collect_youtube(channel_id: str) -> dict:
         cutoff = datetime.utcnow() - timedelta(days=14)
         recent_videos = [
             v for v in videos
-            if v.get("uploadedAt") and datetime.fromisoformat(
-                v["uploadedAt"].replace("Z", "+00:00")
+            if v.get("uploadDate") and datetime.fromisoformat(
+                v["uploadDate"].replace("Z", "+00:00")
             ).replace(tzinfo=None) > cutoff
         ]
 
