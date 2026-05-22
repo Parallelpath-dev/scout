@@ -231,7 +231,7 @@ def collect_facebook_posts(page_name: str) -> dict:
 def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
     """Scrape Meta Ads Library for active competitor ads."""
     try:
-       results = run_actor("curious_coder/facebook-ads-library-scraper", {
+        results = run_actor("curious_coder/facebook-ads-library-scraper", {
             "startUrls": [{"url": meta_ads_url}],
             "maxResults": 20,
         })
