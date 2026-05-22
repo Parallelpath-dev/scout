@@ -92,31 +92,17 @@ jobs:
             "
           fi
 
-      - name: Run YouTube collector
+      - name: Run Apify social collector
         run: |
           INPUT_SLUG="${{ github.event.inputs.client_slug }}"
           if [ -n "$INPUT_SLUG" ]; then
-            python collectors/social_youtube.py "$INPUT_SLUG"
+            python collectors/social_apify.py "$INPUT_SLUG"
           else
             echo '${{ steps.get-clients.outputs.clients }}' | python -c "
           import sys, json, subprocess
           clients = json.load(sys.stdin)
           for slug in clients:
-              subprocess.run(['python', 'collectors/social_youtube.py', slug], check=False)
-            "
-          fi
-
-      - name: Run Instagram collector
-        run: |
-          INPUT_SLUG="${{ github.event.inputs.client_slug }}"
-          if [ -n "$INPUT_SLUG" ]; then
-            python collectors/social_instagram.py "$INPUT_SLUG"
-          else
-            echo '${{ steps.get-clients.outputs.clients }}' | python -c "
-          import sys, json, subprocess
-          clients = json.load(sys.stdin)
-          for slug in clients:
-              subprocess.run(['python', 'collectors/social_instagram.py', slug], check=False)
+              subprocess.run(['python', 'collectors/social_apify.py', slug], check=False)
             "
           fi
 
