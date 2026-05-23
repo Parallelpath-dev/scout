@@ -244,16 +244,87 @@ def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
             return {}
 
         ads = []
+
         for ad in results[:20]:
+            snapshot = ad.get("snapshot") or {}
+            cards = snapshot.get("cards") or []
+            videos = snapshot.get("videos") or []
+            images = snapshot.get("images") or []
+
+            body_text = (
+                snapshot.get("body", {}).get("text")
+                or (cards[0].get("body") if cards else "")
+                or ""
+            )
+
+            title = (
+                snapshot.get("title")
+                or (cards[0].get("title") if cards else "")
+                or ""
+            )
+
+            link_url = (
+                snapshot.get("link_url")
+                or (cards[0].get("link_url") if cards else "")
+                or ""
+            )
+
+            cta_text = (
+                snapshot.get("cta_text")
+                or (cards[0].get("cta_text") if cards else "")
+                or ""
+            )
+
+            creative_assets = []
+
+            for card in cards:
+                creative_assets.append({
+                    "type": "card",
+                    "body": card.get("body"),
+                    "title": card.get("title"),
+                    "link_url": card.get("link_url"),
+                    "image_url": card.get("resized_image_url") or card.get("original_image_url"),
+                    "video_url": card.get("video_hd_url") or card.get("video_sd_url"),
+                    "preview_image_url": card.get("video_preview_image_url"),
+                })
+
+            for video in videos:
+                creative_assets.append({
+                    "type": "video",
+                    "video_url": video.get("video_hd_url") or video.get("video_sd_url"),
+                    "preview_image_url": video.get("video_preview_image_url"),
+                })
+
+            for image in images:
+                creative_assets.append({
+                    "type": "image",
+                    "image_url": image.get("resized_image_url") or image.get("original_image_url"),
+                })
+
             ads.append({
-                "ad_id": ad.get("ad_id") or ad.get("adArchiveID"),
-                "page_name": ad.get("page_name") or ad.get("pageName"),
-                "ad_creative_body": (ad.get("ad_text") or ad.get("snapshot", {}).get("body", {}).get("text", "") or "")[:300],
-                "ad_creative_link_title": ad.get("cta_text") or ad.get("snapshot", {}).get("title", ""),
-                "start_date": ad.get("start_date") or ad.get("startDate"),
-                "end_date": ad.get("end_date") or ad.get("endDate"),
-                "formats": ad.get("platforms") or ad.get("publisherPlatform", []),
-                "is_active": ad.get("status") == "active" if ad.get("status") else ad.get("isActive", True),
+                "ad_archive_id": ad.get("ad_archive_id"),
+                "ad_library_url": ad.get("ad_library_url"),
+                "page_id": ad.get("page_id"),
+                "page_name": ad.get("page_name") or snapshot.get("page_name"),
+                "page_like_count": snapshot.get("page_like_count"),
+                "is_active": ad.get("is_active", False),
+                "display_format": snapshot.get("display_format"),
+                "publisher_platforms": ad.get("publisher_platform", []),
+                "start_date": ad.get("start_date_formatted"),
+                "end_date": ad.get("end_date_formatted"),
+                "start_date_raw": ad.get("start_date"),
+                "end_date_raw": ad.get("end_date"),
+                "body_text": body_text[:500],
+                "title": title,
+                "cta_text": cta_text,
+                "link_url": link_url,
+                "caption": snapshot.get("caption"),
+                "link_description": snapshot.get("link_description"),
+                "cards_count": len(cards),
+                "has_video": bool(videos or any(c.get("video_hd_url") or c.get("video_sd_url") for c in cards)),
+                "has_image": bool(images or any(c.get("resized_image_url") or c.get("original_image_url") for c in cards)),
+                "branded_content": snapshot.get("branded_content"),
+                "creative_assets": creative_assets[:10],
             })
 
         active_ads = [a for a in ads if a.get("is_active")]
@@ -262,9 +333,12 @@ def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
             "platform": "meta_ads",
             "competitor": competitor_name,
             "total_active_ads": len(active_ads),
+            "total_available_ads": results[0].get("total") if results else None,
+            "ads_collected": len(ads),
             "ads": ads,
             "collected_at": datetime.utcnow().isoformat(),
         }
+
     except Exception as e:
         print(f"[apify] ERROR Meta Ads {competitor_name}: {e}")
         return {}
