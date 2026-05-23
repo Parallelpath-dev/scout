@@ -280,7 +280,7 @@ def collect_youtube(channel_id: str) -> dict:
 
         # Separate channel from videos
         channel = {}
-        videos = results[:20]
+        videos = [r for r in results if r.get("type") == "video"][:20]
 
         cutoff = datetime.utcnow() - timedelta(days=14)
         recent_videos = []
