@@ -232,8 +232,12 @@ def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
     """Scrape Meta Ads Library for active competitor ads."""
     try:
         results = run_actor("curious_coder/facebook-ads-library-scraper", {
-            "startUrls": [{"url": meta_ads_url}],
-            "maxResults": 20,
+            "urls": [{"url": meta_ads_url}],
+            "count": 20,
+            "scrapeAdDetails": False,
+            "scrapePageAds.activeStatus": "active",
+            "scrapePageAds.countryCode": "US",
+            "scrapePageAds.sortBy": "impressions_desc",
         })
 
         if not results:
