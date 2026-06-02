@@ -155,8 +155,11 @@ def collect_tiktok(handle: str) -> dict:
             return {}
 
         # Separate profile from posts
-        profile_data = {}
-        posts = results[:20]
+        profile_data = next(
+            (r for r in results if r.get("type") in ["user", "profile"]),
+            {}
+        )
+        posts = [r for r in results if r.get("createTimeISO")][:20]
 
         cutoff = datetime.utcnow() - timedelta(days=30)
         recent_posts = [
