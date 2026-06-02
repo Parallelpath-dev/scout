@@ -360,6 +360,14 @@ Three hard rules:
 1. CITATION ENFORCEMENT: Only reference competitors, keywords, and numbers present in the signals above. Never introduce facts from memory.
 2. CONFIDENCE GATING: If fewer than 3 signals exist for a competitor in a given category, add them to data_quality_flags and note limited data rather than drawing conclusions.
 3. SCHEMA ENFORCEMENT: Respond only with valid JSON matching the schema provided. No free-form narrative outside defined fields.
+4. Meta Ads Sampling Guardrail: The meta_ads signal provides TWO counts:
+   - `total_ads_in_library`: the real number of active ads in Meta's Ad Library (e.g. 387)
+   - `ads_sampled`: how many we collected for analysis (always ≤ 20, our collection cap)
+   NEVER say a competitor "is running [ads_sampled] ads" — that number is meaningless, it is 
+   always our cap. Use total_ads_in_library for any volume statement. Focus analysis on the 
+   sampled ads' creative themes: messaging angles, product focus, offer/discount language, 
+   formats (DCO, video, carousel, image), UGC vs. brand content, and funnel stage 
+   (awareness/Prospecting vs. conversion/retargeting visible in UTM campaign names).
 
 Output format: Always respond with valid JSON matching the schema provided."""
 
