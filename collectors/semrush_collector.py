@@ -109,7 +109,7 @@ def get_keyword_positions(domain: str, keywords: list[str]) -> list[dict]:
             "domain": domain,
             "database": "us",
             "display_limit": 200,
-            "export_columns": "Ph,Po,Nq,Ur",
+            "export_columns": "Ph,Po,Nq,Cp,Ur,Tr",
             "display_sort": "tr_desc",
         }
         resp = requests.get(SEMRUSH_BASE, params=params)
@@ -122,18 +122,20 @@ def get_keyword_positions(domain: str, keywords: list[str]) -> list[dict]:
         headers = lines[0].split(";")
         all_keywords = [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
 
-        # Build lookup map by keyword phrase
-        kw_map = {row.get("Ph", "").lower(): row for row in all_keywords}
+        # Build lookup map by keyword phrase — API returns full column names
+        kw_map = {row.get("Keyword", row.get("Ph", "")).lower(): row for row in all_keywords}
 
         results = []
         for kw in keywords:
             match = kw_map.get(kw.lower())
             if match:
+                pos = match.get("Position", match.get("Po", ""))
+                vol = match.get("Search Volume", match.get("Nq", ""))
                 results.append({
                     "keyword": kw,
-                    "position": int(match["Po"]) if match.get("Po", "").isdigit() else None,
-                    "volume": int(match["Nq"]) if match.get("Nq", "").isdigit() else None,
-                    "url": match.get("Ur"),
+                    "position": int(pos) if str(pos).isdigit() else None,
+                    "volume": int(vol) if str(vol).isdigit() else None,
+                    "url": match.get("Url", match.get("Ur")),
                     "domain": domain,
                 })
             else:
