@@ -1050,9 +1050,11 @@ function renderContentThemes(themes) {
   if (!c) return
   if (!themes.length) { c.innerHTML=`<div class="empty-state">No content themes synthesized this week.</div>`; return }
   c.innerHTML = `<div class="card-grid card-grid--3">${themes.map(t=>`<div class="card card--theme">
-    <div class="card__title">${t.theme||t.title||t}</div>
-    ${t.competitors?`<div class="card__body">${Array.isArray(t.competitors)?t.competitors.join(', '):t.competitors}</div>`:''}
-    ${t.description?`<div class="card__body">${t.description}</div>`:''}
+    c.innerHTML = `<div class="card-grid card-grid--3">${themes.map(t=>`<div class="card card--theme">
+    <div class="card__title">${t.competitor||t.theme||t.title||t}</div>
+    ${t.dominant_platform?`<div class="col-note" style="margin-bottom:8px">${t.dominant_platform}</div>`:''}
+    ${t.themes?.length?`<div class="card__body">${t.themes.join(' · ')}</div>`:''}
+    ${t.theme_shift?`<div class="card__body" style="margin-top:8px;color:var(--pp-sand)">${t.theme_shift}</div>`:''}
   </div>`).join('')}</div>`
 }
 
