@@ -96,23 +96,21 @@ def get_paid_keywords(domain: str, limit: int = 100) -> list[dict]:
     return [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
 
 
-def get_keyword_positions(domain: str, keywords: list[str]) -> list[dict]:
+def get_keyword_positions(domain: str, keywords: list[str], campaign_id: str = "29906708") -> list[dict]:
     """
-    Get positions for tracked keywords using domain_organic endpoint.
-    One API call per domain instead of one per keyword — 90% unit reduction.
-    Fetches top 200 organic keywords, then filters locally for tracked terms.
+    Get keyword positions using Position Tracking API.
+    One API call per domain — far fewer units than phrase_organic or domain_organic.
     """
     try:
         params = {
-            "type": "domain_organic",
+            "type": "tracking_position_all",
             "key": SEMRUSH_API_KEY,
+            "campaign_id": campaign_id,
             "domain": domain,
             "database": "us",
-            "display_limit": 200,
-            "export_columns": "Ph,Po,Nq,Cp,Ur,Tr",
-            "display_sort": "tr_desc",
+            "export_columns": "Ph,Po,Nq,Ur",
         }
-        resp = requests.get(SEMRUSH_BASE, params=params)
+        resp = requests.get("https://api.semrush.com/analytics/v1/", params=params)
         resp.raise_for_status()
 
         lines = resp.text.strip().split("\n")
@@ -120,22 +118,22 @@ def get_keyword_positions(domain: str, keywords: list[str]) -> list[dict]:
             return [{"keyword": kw, "position": None, "volume": None, "url": None, "domain": domain} for kw in keywords]
 
         headers = lines[0].split(";")
-        all_keywords = [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
+        all_rows = [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
 
-        # Build lookup map by keyword phrase — API returns full column names
-        kw_map = {row.get("Keyword", row.get("Ph", "")).lower(): row for row in all_keywords}
+        # Build lookup by keyword
+        kw_map = {row.get("Ph", "").lower(): row for row in all_rows}
 
         results = []
         for kw in keywords:
             match = kw_map.get(kw.lower())
             if match:
-                pos = match.get("Position", match.get("Po", ""))
-                vol = match.get("Search Volume", match.get("Nq", ""))
+                pos = match.get("Po", "")
+                vol = match.get("Nq", "")
                 results.append({
                     "keyword": kw,
                     "position": int(pos) if str(pos).isdigit() else None,
                     "volume": int(vol) if str(vol).isdigit() else None,
-                    "url": match.get("Url", match.get("Ur")),
+                    "url": match.get("Ur"),
                     "domain": domain,
                 })
             else:
@@ -144,7 +142,7 @@ def get_keyword_positions(domain: str, keywords: list[str]) -> list[dict]:
         return results
 
     except Exception as e:
-        print(f"[semrush]   ERROR domain_organic positions for {domain}: {e}")
+        print(f"[semrush]   ERROR position tracking for {domain}: {e}")
         return [{"keyword": kw, "position": None, "volume": None, "url": None, "domain": domain} for kw in keywords]
 
 
