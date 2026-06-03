@@ -117,8 +117,8 @@ def collect_instagram(handle: str) -> dict:
             ).replace(tzinfo=None) > cutoff
         ]
 
-        avg_likes = sum(p.get("likesCount", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
-        avg_comments = sum(p.get("commentsCount", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
+        avg_likes = sum(p.get("likes", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
+        avg_comments = sum(p.get("comments", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
 
         # Extract content themes from captions
         captions = [p.get("caption", "") for p in recent_posts if p.get("caption")]
@@ -126,8 +126,8 @@ def collect_instagram(handle: str) -> dict:
         return {
             "platform": "instagram",
             "handle": handle,
-            "follower_count": profile.get("followersCount"),
-            "following_count": profile.get("followingCount"),
+            "follower_": profile.get("followers"),
+            "following_": profile.get("followingCount"),
             "posts_count": profile.get("postsCount"),
             "posts_last_30d": len(recent_posts),
             "avg_likes": round(avg_likes, 1),
@@ -236,7 +236,7 @@ def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
     try:
         results = run_actor("curious_coder/facebook-ads-library-scraper", {
             "urls": [{"url": meta_ads_url}],
-            "count": 20,
+            "count": 35,
             "scrapeAdDetails": False,
             "scrapePageAds.activeStatus": "active",
             "scrapePageAds.countryCode": "US",
@@ -248,7 +248,7 @@ def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
 
         ads = []
 
-        for ad in results[:20]:
+        for ad in results[:35]:
             snapshot = ad.get("snapshot") or {}
             cards = snapshot.get("cards") or []
             videos = snapshot.get("videos") or []
