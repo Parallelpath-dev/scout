@@ -1040,7 +1040,7 @@ function renderSocialMetrics(ig,tt,fb,yt) {
       <td class="col-platform">${i?`<span class="metric-primary">${fmt(i.posts_last_30d)} posts</span><span class="metric-secondary">${fmt(i.follower_count)} followers · ${fmt(i.avg_likes)} avg likes</span>`:'<span class="col-note">—</span>'}</td>
       <td class="col-platform">${t?`<span class="metric-primary">${fmt(t.posts_last_30d)} posts</span><span class="metric-secondary">${fmt(t.avg_views)} avg views</span>`:'<span class="col-note">—</span>'}</td>
       <td class="col-platform">${f?`<span class="metric-primary">${fmt(f.posts_last_30d)} posts</span><span class="metric-secondary">${fmt(f.avg_likes)} avg likes</span>`:'<span class="col-note">—</span>'}</td>
-      <td class="col-platform">${y?`<span class="metric-primary">${fmt(y.uploads_14d)} uploads</span>${y.top_video_title?`<span class="metric-secondary">${y.top_video_title.slice(0,50)}…</span>`:''}`:'<span class="col-note">—</span>'}</td>
+      <td class="col-platform">${(()=>{ if(!y) return '<span class="col-note">—</span>'; let s='<span class="metric-primary">'+fmt(y.uploads_14d)+' uploads</span>'; if(y.top_video_title) s+='<span class="metric-secondary">'+y.top_video_title.slice(0,50)+'…</span>'; return s; })()}</td>
     </tr>`
   }).join('')
 }
@@ -1050,11 +1050,9 @@ function renderContentThemes(themes) {
   if (!c) return
   if (!themes.length) { c.innerHTML=`<div class="empty-state">No content themes synthesized this week.</div>`; return }
   c.innerHTML = `<div class="card-grid card-grid--3">${themes.map(t=>`<div class="card card--theme">
-    c.innerHTML = `<div class="card-grid card-grid--3">${themes.map(t=>`<div class="card card--theme">
-    <div class="card__title">${t.competitor||t.theme||t.title||t}</div>
-    ${t.dominant_platform?`<div class="col-note" style="margin-bottom:8px">${t.dominant_platform}</div>`:''}
-    ${t.themes?.length?`<div class="card__body">${t.themes.join(' · ')}</div>`:''}
-    ${t.theme_shift?`<div class="card__body" style="margin-top:8px;color:var(--pp-sand)">${t.theme_shift}</div>`:''}
+    <div class="card__title">${t.theme||t.title||t}</div>
+    ${t.competitors?`<div class="card__body">${Array.isArray(t.competitors)?t.competitors.join(', '):t.competitors}</div>`:''}
+    ${t.description?`<div class="card__body">${t.description}</div>`:''}
   </div>`).join('')}</div>`
 }
 
