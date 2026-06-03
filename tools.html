@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SideCountry AI — Parallel Path</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --pp-cadet:   #233D4D;
+  --pp-current: #3C6E71;
+  --pp-linen:   #F6EDE6;
+  --pp-coral:   #E1885E;
+  --pp-mustard: #DCBE4C;
+  --pp-bubble:  #8CBEC6;
+  --pp-spring:  #C6EB4C;
+  --pp-sand:    #D0A684;
+  --pp-nectar:  #F0C3AE;
+  --fh: 'Open Sans', sans-serif;
+  --fb: 'Merriweather', serif;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--pp-cadet);
+  color: var(--pp-linen);
+  font-family: var(--fb);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+/* ── Loading overlay ──────────────────────────────────────────────────────── */
+#loading-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--pp-cadet);
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+#loading-overlay.visible { display: flex; }
+.loading-eyebrow {
+  font-family: var(--fh);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pp-sand);
+  margin-bottom: 16px;
+}
+.loading-headline {
+  font-family: var(--fh);
+  font-weight: 300;
+  font-size: 28px;
+  color: var(--pp-linen);
+  margin-bottom: 12px;
+}
+.loading-sub {
+  font-family: var(--fb);
+  font-size: 14px;
+  color: var(--pp-bubble);
+}
+.loading-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: 32px;
+  justify-content: center;
+}
+.loading-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pp-mustard);
+  animation: dot-pulse 1.4s ease-in-out infinite;
+}
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dot-pulse {
+  0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+  margin-bottom: 64px;
+}
+
+.header-eyebrow {
+  font-family: var(--fh);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--pp-sand);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.header-eyebrow::before,
+.header-eyebrow::after {
+  content: '';
+  width: 32px;
+  height: 1px;
+  background: var(--pp-sand);
+  opacity: 0.4;
+}
+
+.header-title {
+  font-family: var(--fh);
+  font-size: 48px;
+  font-weight: 300;
+  color: var(--pp-linen);
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+  line-height: 1.1;
+}
+
+.header-title span {
+  color: var(--pp-mustard);
+  font-weight: 700;
+}
+
+.header-subtitle {
+  font-family: var(--fb);
+  font-size: 14px;
+  color: var(--pp-bubble);
+  line-height: 1.7;
+  max-width: 440px;
+  margin: 0 auto;
+  margin-top: 12px;
+}
+
+/* ── Tool cards ───────────────────────────────────────────────────────────── */
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 840px;
+  width: 100%;
+}
+
+.tool-card {
+  background: rgba(246, 237, 230, 0.04);
+  border: 1px solid rgba(246, 237, 230, 0.1);
+  border-radius: 16px;
+  padding: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tool-card:hover {
+  border-color: rgba(246, 237, 230, 0.22);
+  background: rgba(246, 237, 230, 0.07);
+}
+
+.tool-card--scout:hover { border-color: rgba(220, 190, 76, 0.4); }
+.tool-card--sentiment:hover { border-color: rgba(140, 190, 198, 0.4); }
+
+.tool-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tool-icon--scout { background: rgba(220, 190, 76, 0.12); }
+.tool-icon--sentiment { background: rgba(140, 190, 198, 0.12); }
+
+.tool-icon svg { width: 24px; height: 24px; }
+
+.tool-eyebrow {
+  font-family: var(--fh);
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--pp-sand);
+  margin-bottom: 6px;
+}
+
+.tool-name {
+  font-family: var(--fh);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--pp-linen);
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.tool-desc {
+  font-family: var(--fb);
+  font-size: 13px;
+  color: var(--pp-bubble);
+  line-height: 1.7;
+  flex: 1;
+}
+
+.tool-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--fh);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 8px;
+  transition: gap 0.2s;
+}
+
+.tool-cta--scout { color: var(--pp-mustard); }
+.tool-cta--sentiment { color: var(--pp-bubble); }
+
+.tool-card:hover .tool-cta { gap: 12px; }
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.footer {
+  margin-top: 64px;
+  text-align: center;
+  font-family: var(--fh);
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(246, 237, 230, 0.25);
+  letter-spacing: 0.06em;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loading-overlay">
+  <div class="loading-eyebrow">Parallel Path · SideCountry AI</div>
+  <div class="loading-headline">Launching your tool...</div>
+  <div class="loading-sub">Just a moment</div>
+  <div class="loading-dots">
+    <div class="loading-dot"></div>
+    <div class="loading-dot"></div>
+    <div class="loading-dot"></div>
+  </div>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-eyebrow">Parallel Path · SideCountry AI</div>
+  <h1 class="header-title">AI <span>Tools</span></h1>
+  <p class="header-subtitle">Proprietary intelligence tools built for your brand's competitive advantage.</p>
+</div>
+
+<!-- Tool cards -->
+<div class="tools-grid">
+
+  <a class="tool-card tool-card--scout" href="https://parallelpath-dev.github.io/scout/" onclick="showLoading('Launching Scout...')">
+    <div class="tool-icon tool-icon--scout">
+      <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="10" cy="10" r="6.5" stroke="#DCBE4C" stroke-width="1.8"/>
+        <line x1="15" y1="15" x2="22" y2="22" stroke="#DCBE4C" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <div class="tool-eyebrow">Competitive Intelligence</div>
+      <div class="tool-name">Scout</div>
+      <div class="tool-desc">Weekly monitoring of competitor search, social, paid, and owned channel activity — synthesized into actionable intelligence by AI.</div>
+    </div>
+    <div class="tool-cta tool-cta--scout">Open Scout →</div>
+  </a>
+
+  <a class="tool-card tool-card--sentiment" href="SENTIMENT_TOOL_URL_HERE" onclick="showLoading('Launching Consumer Sentiment...')">
+    <div class="tool-icon tool-icon--sentiment">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="#8CBEC6" stroke-width="1.8"/>
+        <path d="M8 13s1.5 2 4 2 4-2 4-2" stroke="#8CBEC6" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="9" cy="10" r="1" fill="#8CBEC6"/>
+        <circle cx="15" cy="10" r="1" fill="#8CBEC6"/>
+      </svg>
+    </div>
+    <div>
+      <div class="tool-eyebrow">Consumer Insights</div>
+      <div class="tool-name">Consumer Sentiment</div>
+      <div class="tool-desc">AI-powered analysis of consumer sentiment across channels — surfacing what your audience thinks, feels, and wants right now.</div>
+    </div>
+    <div class="tool-cta tool-cta--sentiment">Open Sentiment →</div>
+  </a>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">Parallel Path © 2026 · SideCountry AI Studio</div>
+
+<script>
+function showLoading(message) {
+  const overlay = document.getElementById('loading-overlay')
+  const headline = overlay.querySelector('.loading-headline')
+  headline.textContent = message
+  overlay.classList.add('visible')
+}
+</script>
+
+</body>
+</html>
