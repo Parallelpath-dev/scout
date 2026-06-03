@@ -1114,6 +1114,8 @@ function renderWebChanges(changes) {
       </div>
       ${top?`<div class="web-change__field">${top.field}</div>
       <div class="web-change__diff">
+        ${top.new_value&&top.new_value.length>3?`<div class="web-change__added"><span>${top.new_value.slice(0,120)}</span></div>`:''}
+        ${top.old_value&&top.old_value.length>3?`<div class="web-change__removed"><span>${top.old_value.slice(0,120)}</span></div>`:''}
         ${added.length?`<div class="web-change__added">${added.map(t=>`<span>${t}</span>`).join('')}</div>`:''}
         ${removed.length?`<div class="web-change__removed">${removed.map(t=>`<span>${t}</span>`).join('')}</div>`:''}
       </div>`:''}
