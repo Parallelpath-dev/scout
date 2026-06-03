@@ -219,20 +219,23 @@ body {
 .tool-cta {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-family: var(--fh);
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-top: 8px;
-  transition: gap 0.2s;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-top: auto;
+  transition: opacity 0.2s, gap 0.2s;
 }
 
-.tool-cta--scout { color: var(--pp-mustard); }
-.tool-cta--sentiment { color: var(--pp-bubble); }
+.tool-cta--scout { background: var(--pp-mustard); color: var(--pp-cadet); }
+.tool-cta--sentiment { background: var(--pp-bubble); color: var(--pp-cadet); }
 
-.tool-card:hover .tool-cta { gap: 12px; }
+.tool-card:hover .tool-cta { opacity: 0.88; gap: 12px; }
 
 /* ── Footer ───────────────────────────────────────────────────────────────── */
 .footer {
