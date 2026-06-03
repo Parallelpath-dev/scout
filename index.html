@@ -1052,8 +1052,9 @@ function renderContentThemes(themes) {
   if (!themes.length) { c.innerHTML=`<div class="empty-state">No content themes synthesized this week.</div>`; return }
   c.innerHTML = `<div class="card-grid card-grid--3">${themes.map(t=>`<div class="card card--theme">
     <div class="card__title">${t.competitor||t.theme||t.title||''}</div>
-    ${t.competitors?`<div class="card__body">${Array.isArray(t.competitors)?t.competitors.join(', '):t.competitors}</div>`:''}
-    ${t.description?`<div class="card__body">${t.description}</div>`:''}
+    ${t.dominant_platform?`<div class="col-note" style="margin-bottom:6px">${t.dominant_platform}</div>`:''}
+    ${t.themes&&t.themes.length?`<div class="card__body">${t.themes.join(' · ')}</div>`:''}
+    ${t.theme_shift?`<div class="card__body" style="margin-top:6px;color:var(--pp-sand)">${t.theme_shift}</div>`:''}
   </div>`).join('')}</div>`
 }
 
@@ -1084,7 +1085,11 @@ function renderSocialRecs(recs) {
   if (!c) return
   if (!recs.length) { c.innerHTML=`<div class="empty-state">No social content recommendations this week.</div>`; return }
   c.innerHTML = recs.map(r=>`<div class="signal-card">
-    ${r.role?`<div class="signal-card__role">${r.role}</div>`:''}
+    <div class="signal-card__header">
+      ${r.competitor?`<span class="competitor-tag">${r.competitor}</span>`:''}
+      ${r.advisor_role?`<span class="signal-card__role">${r.advisor_role}</span>`:r.role?`<span class="signal-card__role">${r.role}</span>`:''}
+      ${r.platform?`<span class="platform-tag">${r.platform}</span>`:''}
+    </div>
     ${r.observation?`<div class="signal-card__observation">${r.observation}</div>`:''}
     <div class="signal-card__title">${r.recommended_response||r.recommendation||r.title||''}</div>
     ${r.rationale?`<div class="signal-card__body">${r.rationale}</div>`:''}
