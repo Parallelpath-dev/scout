@@ -450,6 +450,7 @@ a:hover { text-decoration:underline; }
         <h2 class="section-title">Top Developments</h2>
       </div>
       <div id="top-developments-container"></div>
+      <div id="campaign-signals-container"></div>
     </section>
     <section class="section">
       <div class="section-header">
@@ -616,14 +617,6 @@ a:hover { text-decoration:underline; }
         <p class="section-desc">Emails received this week via monitored competitor lists. Subject lines reflect current promotional messaging and urgency tactics. To read any full email, ask Jackson to pull it by subject line.</p>
       </div>
       <div id="email-intelligence-container"></div>
-    </section>
-    <section class="section">
-      <div class="section-header">
-        <span class="section-eyebrow">Campaign Detection</span>
-        <h2 class="section-title">Coordinated Campaign Signals</h2>
-        <p class="section-desc">When a competitor's social posts, paid ads, web changes, and emails align around a shared theme, Scout flags it as a likely coordinated campaign. These are inferences, not confirmations.</p>
-      </div>
-      <div id="campaign-signals-container"></div>
     </section>
   </div>
 
@@ -836,6 +829,7 @@ function renderOverview(d) {
     })
   }
   renderTopDevelopments(d.topDevelopments || [])
+  renderCampaignSignals(d.brandCampaignSignals||[])
   const narEl = document.querySelector('.js-strategic-narrative')
   if (narEl) narEl.textContent = d.strategicNarrative || ''
   renderPressureTrend(d.pressureHistory || [])
@@ -873,6 +867,7 @@ function renderPressureTrend(history) {
   const labels = recent.map(h => new Date(h.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}))
   const scores = recent.map(h => h.score)
   const ptColors = scores.map(s => s<=25?'#8fb0b5':s<=50?'#6dbf8f':s<=75?'#dcbe4c':s<=90?'#e1885e':'#c94f4f')
+  if (Chart.getChart(canvas)) Chart.getChart(canvas).destroy()
   new Chart(canvas, {
     type:'line', data:{labels, datasets:[{label:'Pressure Score',data:scores,borderColor:'#8fb0b5',backgroundColor:'rgba(143,176,181,0.08)',pointBackgroundColor:ptColors,pointRadius:5,tension:0.3,fill:true}]},
     options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Score: ${c.parsed.y} — ${scoreLabel(c.parsed.y)}`}}},
@@ -914,12 +909,13 @@ function renderGoogleTrends(keywords) {
   const terms = keywords.map(k=>k.keyword).slice(0,5)
   const encodedTerms = terms.map(t=>encodeURIComponent(t)).join(',')
   const trendsUrl = `https://trends.google.com/trends/explore?date=today%203-m&geo=US&q=${encodedTerms}&hl=en`
-  const embedUrl = `https://trends.google.com/trends/embed/explore/TIMESERIES?req=%7B%22comparisonItem%22%3A%5B${terms.map(t=>`%7B%22keyword%22%3A%22${encodeURIComponent(t)}%22%2C%22geo%22%3A%22US%22%2C%22time%22%3A%22today%203-m%22%7D`).join('%2C')}%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D&tz=-240&hl=en`
-  c.innerHTML = `<div class="trends-wrap">
-    <iframe src="${embedUrl}" frameborder="0" scrolling="0" style="border:none;width:100%;height:360px;opacity:0;transition:opacity 0.3s;" onload="this.style.opacity='1'" onerror="document.getElementById('trends-fallback').style.display='block';this.style.display='none';"></iframe>
-    <div id="trends-fallback" class="trends-fallback" style="display:none">Google Trends could not load inline. <a href="${trendsUrl}" target="_blank" rel="noopener">Open in Google Trends →</a></div>
-  </div>
-  <div class="trends-terms">Comparing: ${terms.map(t=>`<span class="keyword-tag">${t}</span>`).join('')}</div>`
+  c.innerHTML = `<div style="padding:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+    <div>
+      <div class="card__title" style="margin-bottom:8px">Google Trends — US · 90 Days</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${terms.map(t=>`<span class="keyword-tag">${t}</span>`).join('')}</div>
+    </div>
+    <a href="${trendsUrl}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;background:rgba(198,235,76,0.1);border:1px solid rgba(198,235,76,0.25);color:var(--pp-spring);font-family:var(--fh);font-size:12px;font-weight:600;padding:10px 18px;border-radius:8px;text-decoration:none;">Open in Google Trends →</a>
+  </div>`
 }
 
 function renderKeywordMovements(movements) {
@@ -969,7 +965,7 @@ function renderMetaAds(metaAds) {
         </div>
         <span class="col-note">${comp.ads_sampled||20} sampled</span>
       </div>
-      ${hasReal ? `<div class="ad-rows">${ads.filter(a=>a.body_text).map(ad=>`<div class="ad-row">
+      ${hasReal ? `<div class="ad-rows">${ads.filter(a=>a.body_text && !a.body_text.includes('{{')).map(ad=>`<div class="ad-row">
         <div class="ad-row__body">${ad.body_text.slice(0,120)}${ad.body_text.length>120?'…':''}</div>
         <div class="ad-row__meta">
           <span class="ad-format-pill">${ad.display_format||'UNKNOWN'}</span>
@@ -996,6 +992,7 @@ function renderPaidTrend(paidTrend) {
     return {label:comp,data:allDates.map(d=>dm[d]??null),borderColor:colors[comp]||'#8fb0b5',backgroundColor:'transparent',tension:0.3,spanGaps:true,pointRadius:3}
   })
   const labels = allDates.map(d=>new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'}))
+  if (Chart.getChart(canvas)) Chart.getChart(canvas).destroy()
   new Chart(canvas, {
     type:'line', data:{labels,datasets},
     options:{responsive:true,plugins:{legend:{position:'top',labels:{color:'#8fb0b5',font:{size:11}}},tooltip:{mode:'index',intersect:false}},
@@ -1050,7 +1047,7 @@ function renderContentThemes(themes) {
   if (!c) return
   if (!themes.length) { c.innerHTML=`<div class="empty-state">No content themes synthesized this week.</div>`; return }
   c.innerHTML = `<div class="card-grid card-grid--3">${themes.map(t=>`<div class="card card--theme">
-    <div class="card__title">${t.theme||t.title||t}</div>
+    <div class="card__title">${t.competitor||t.theme||t.title||''}</div>
     ${t.competitors?`<div class="card__body">${Array.isArray(t.competitors)?t.competitors.join(', '):t.competitors}</div>`:''}
     ${t.description?`<div class="card__body">${t.description}</div>`:''}
   </div>`).join('')}</div>`
@@ -1084,7 +1081,8 @@ function renderSocialRecs(recs) {
   if (!recs.length) { c.innerHTML=`<div class="empty-state">No social content recommendations this week.</div>`; return }
   c.innerHTML = recs.map(r=>`<div class="signal-card">
     ${r.role?`<div class="signal-card__role">${r.role}</div>`:''}
-    <div class="signal-card__title">${r.recommendation||r.title||r}</div>
+    ${r.observation?`<div class="signal-card__observation">${r.observation}</div>`:''}
+    <div class="signal-card__title">${r.recommended_response||r.recommendation||r.title||''}</div>
     ${r.rationale?`<div class="signal-card__body">${r.rationale}</div>`:''}
   </div>`).join('')
 }
@@ -1093,7 +1091,6 @@ function renderSocialRecs(recs) {
 function renderOwnedChannels(d) {
   renderWebChanges(d.webChanges||[])
   renderEmailIntelligence(d.emailSummary||[],d.ownedChannelObservations||[])
-  renderCampaignSignals(d.brandCampaignSignals||[])
 }
 
 function renderWebChanges(changes) {
