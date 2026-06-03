@@ -4,686 +4,1205 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scout — Competitive Intelligence by Parallel Path</title>
-<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
+
+/* ── BRAND TOKENS ─────────────────────────────────────────────────────────── */
 :root {
-  --current:#3C6E71;--linen:#F6EDE6;--coral:#E1885E;--mustard:#DCBE4C;
-  --bubble:#8CBEC6;--spring:#C6EB4C;--nectar:#F0C3AE;--dove:#666666;
-  --bg:#1d3341;--surface:#243f50;--surface2:#192c3a;
-  --border:rgba(246,237,230,0.08);--border2:rgba(246,237,230,0.14);
-  --text:#F6EDE6;--muted:#8fb0b5;
-  --fh:'Open Sans',sans-serif;--fb:'Merriweather',serif;
+  /* Parallel Path palette */
+  --pp-cadet:   #233D4D;
+  --pp-current: #3C6E71;
+  --pp-linen:   #F6EDE6;
+  --pp-coral:   #E1885E;
+  --pp-mustard: #DCBE4C;
+  --pp-bubble:  #8CBEC6;
+  --pp-spring:  #C6EB4C;
+  --pp-nectar:  #F0C3AE;
+  --pp-sand:    #D0A684;
+  --pp-dove:    #666666;
+  --pp-jet:     #333333;
+
+  /* Scout surface system (Cadet dark-mode) */
+  --bg:       #1d3341;
+  --surface:  #243f50;
+  --surface2: #192c3a;
+  --border:   rgba(246,237,230,0.08);
+  --border2:  rgba(246,237,230,0.14);
+  --text:     #F6EDE6;
+  --muted:    #8fb0b5;
+
+  /* Typography */
+  --fh: 'Open Sans', sans-serif;
+  --fb: 'Merriweather', serif;
+
+  /* Status colors */
+  --calm:    #8fb0b5;
+  --active:  #6dbf8f;
+  --elevated:#dcbe4c;
+  --high:    #e1885e;
+  --critical:#c94f4f;
 }
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:13px;min-height:100vh;overflow-x:hidden;}
-.shell{display:grid;grid-template-columns:228px 1fr;min-height:100vh;}
 
-/* SIDEBAR */
-.sidebar{background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;}
-.logo-wrap{padding:26px 22px 20px;border-bottom:1px solid var(--border);}
-.logo{display:flex;align-items:center;gap:10px;margin-bottom:3px;}
-.logo-icon{width:30px;height:30px;background:var(--current);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.logo-icon svg{width:16px;height:16px;}
-.logo-name{font-family:var(--fh);font-size:21px;font-weight:700;color:var(--linen);letter-spacing:-0.3px;}
-.logo-by{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:var(--muted);padding-left:40px;}
-.client-badge{margin:14px 14px 6px;background:var(--current);border-radius:8px;padding:12px 16px;}
-.client-badge-label{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:rgba(246,237,230,0.6);margin-bottom:4px;}
-.client-badge-name{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--linen);}
-.nav-section{padding:16px 20px 5px;font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:var(--muted);}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;color:var(--muted);cursor:pointer;transition:all 0.15s;font-family:var(--fh);font-size:13px;font-weight:400;border-left:3px solid transparent;margin:1px 0;user-select:none;}
-.nav-item:hover{color:var(--linen);background:rgba(246,237,230,0.04);}
-.nav-item.active{color:var(--linen);border-left-color:var(--mustard);background:rgba(220,190,76,0.07);font-weight:600;}
-.nav-item svg{width:15px;height:15px;flex-shrink:0;}
-.sidebar-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);}
-.week-badge{font-family:var(--fh);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);display:flex;align-items:center;gap:8px;}
-.week-dot{width:7px;height:7px;border-radius:50%;background:var(--spring);flex-shrink:0;animation:pulse 2.5s infinite;}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.35;transform:scale(0.8)}}
+/* ── RESET ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--fb); font-size:13px; min-height:100vh; overflow-x:hidden; }
+a { color:var(--pp-spring); text-decoration:none; }
+a:hover { text-decoration:underline; }
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:rgba(246,237,230,0.1); border-radius:4px; }
 
-/* MAIN */
-.main{overflow-y:auto;}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:17px 30px;border-bottom:1px solid var(--border);background:rgba(29,51,65,0.95);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
-.topbar-title{font-family:var(--fh);font-size:13px;font-weight:600;color:var(--linen);}
-.topbar-right{display:flex;align-items:center;gap:10px;}
-.date-chip{font-family:var(--fh);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);background:var(--surface2);border:1px solid var(--border2);padding:5px 12px;border-radius:20px;}
-.live-chip{font-family:var(--fh);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--spring);background:rgba(198,235,76,0.1);border:1px solid rgba(198,235,76,0.25);padding:5px 12px;border-radius:20px;display:flex;align-items:center;gap:6px;}
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--spring);animation:pulse 2s infinite;}
-.export-btn{font-family:var(--fh);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;background:var(--current);color:var(--linen);border:none;padding:7px 18px;border-radius:20px;cursor:pointer;}
+/* ── SHELL LAYOUT ─────────────────────────────────────────────────────────── */
+.shell { display:grid; grid-template-columns:228px 1fr; min-height:100vh; }
 
-/* PAGES */
-.page{display:none;}.page.active{display:block;}
-.pc{padding:30px;animation:fadeUp 0.2s ease both;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* ── SIDEBAR ──────────────────────────────────────────────────────────────── */
+.sidebar { background:var(--surface2); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; }
+.logo-wrap { padding:26px 22px 20px; border-bottom:1px solid var(--border); }
+.logo { display:flex; align-items:center; gap:10px; margin-bottom:3px; }
+.logo-icon { width:30px; height:30px; background:var(--pp-current); border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.logo-icon svg { width:16px; height:16px; }
+.logo-name { font-family:var(--fh); font-size:21px; font-weight:700; color:var(--pp-linen); letter-spacing:-0.3px; }
+.logo-by { font-family:var(--fh); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.14em; color:var(--muted); padding-left:40px; }
+.client-badge { margin:14px 14px 6px; background:var(--pp-current); border-radius:8px; padding:12px 16px; }
+.client-badge-label { font-family:var(--fh); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.12em; color:rgba(246,237,230,0.6); margin-bottom:4px; }
+.client-badge-name { font-family:var(--fh); font-size:14px; font-weight:700; color:var(--pp-linen); }
+.nav-section { padding:16px 20px 5px; font-family:var(--fh); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.14em; color:var(--muted); }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; color:var(--muted); cursor:pointer; transition:all 0.15s; font-family:var(--fh); font-size:13px; font-weight:400; border-left:3px solid transparent; margin:1px 0; user-select:none; }
+.nav-item:hover { color:var(--pp-linen); background:rgba(246,237,230,0.04); }
+.nav-item.active { color:var(--pp-linen); border-left-color:var(--pp-mustard); background:rgba(220,190,76,0.07); font-weight:600; }
+.nav-item svg { width:15px; height:15px; flex-shrink:0; }
+.nav-item--internal { opacity:0.6; }
+.nav-item--internal.active { opacity:1; }
+.sidebar-footer { margin-top:auto; padding:16px 20px; border-top:1px solid var(--border); }
+.week-badge { font-family:var(--fh); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); display:flex; align-items:center; gap:8px; }
+.week-dot { width:7px; height:7px; border-radius:50%; background:var(--pp-spring); flex-shrink:0; animation:pulse 2.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.8)} }
 
-/* SHARED COMPONENTS */
-.eyebrow{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.16em;color:var(--bubble);margin-bottom:5px;}
-.page-title{font-family:var(--fh);font-size:26px;font-weight:300;color:var(--linen);margin-bottom:5px;line-height:1.2;}
-.page-sub{font-family:var(--fb);font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:26px;}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:22px;}
-.card2{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:17px;}
-.card-eyebrow{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:var(--bubble);margin-bottom:3px;}
-.card-title{font-family:var(--fh);font-size:15px;font-weight:600;color:var(--linen);margin-bottom:3px;}
-.card-sub{font-family:var(--fb);font-size:11px;color:var(--muted);}
-.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:16px;}
-.legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
-.legend-item{display:flex;align-items:center;gap:6px;font-family:var(--fh);font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;}
-.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
-.chart-h{height:210px;position:relative;}
-.chart-h.tall{height:270px;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;}
-.sec-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;}
-.sec-title{font-family:var(--fh);font-size:15px;font-weight:600;color:var(--linen);}
-.sec-meta{font-family:var(--fh);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);}
-.divider{height:1px;background:var(--border);margin:22px 0;}
+/* ── MAIN + TOPBAR ────────────────────────────────────────────────────────── */
+.main { overflow-y:auto; }
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:17px 30px; border-bottom:1px solid var(--border); background:rgba(29,51,65,0.95); backdrop-filter:blur(10px); position:sticky; top:0; z-index:100; }
+.topbar-title { font-family:var(--fh); font-size:13px; font-weight:600; color:var(--pp-linen); }
+.topbar-right { display:flex; align-items:center; gap:10px; }
+.date-chip { font-family:var(--fh); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); background:var(--surface2); border:1px solid var(--border2); padding:5px 12px; border-radius:20px; }
+.live-chip { font-family:var(--fh); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--pp-spring); background:rgba(198,235,76,0.1); border:1px solid rgba(198,235,76,0.25); padding:5px 12px; border-radius:20px; display:flex; align-items:center; gap:6px; }
+.live-dot { width:6px; height:6px; border-radius:50%; background:var(--pp-spring); animation:pulse 2s infinite; }
 
-/* PRESSURE HERO */
-.hero{background:var(--current);border-radius:14px;padding:30px;display:grid;grid-template-columns:170px 1fr;gap:32px;align-items:center;margin-bottom:22px;position:relative;overflow:hidden;}
-.hero::after{content:'';position:absolute;bottom:-50px;right:-50px;width:220px;height:220px;border-radius:50%;background:rgba(246,237,230,0.04);pointer-events:none;}
-.hero-score-wrap{text-align:center;}
-.hero-eyebrow{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:rgba(246,237,230,0.55);margin-bottom:5px;}
-.hero-score{font-family:var(--fh);font-size:96px;font-weight:700;line-height:1;letter-spacing:-4px;color:var(--mustard);}
-.hero-delta{font-family:var(--fh);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--coral);margin-top:6px;}
-.hero-title{font-family:var(--fh);font-size:19px;font-weight:300;color:var(--linen);margin-bottom:8px;line-height:1.35;}
-.hero-desc{font-family:var(--fb);font-size:12px;color:rgba(246,237,230,0.72);line-height:1.7;margin-bottom:18px;}
-.breakdown{display:flex;gap:10px;flex-wrap:wrap;}
-.bitem{background:rgba(246,237,230,0.1);border-radius:8px;padding:9px 14px;text-align:center;}
-.bitem-label{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:rgba(246,237,230,0.55);margin-bottom:3px;}
-.bitem-val{font-family:var(--fh);font-size:20px;font-weight:700;color:var(--linen);}
+/* ── TAB PANELS ───────────────────────────────────────────────────────────── */
+.tab-panel { display:none; padding:30px; animation:fadeUp 0.2s ease both; }
+.tab-panel.active { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-/* METRICS */
-.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
-.metric{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;}
-.metric-label{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:9px;}
-.metric-val{font-family:var(--fh);font-size:30px;font-weight:700;letter-spacing:-0.5px;color:var(--linen);margin-bottom:5px;}
-.metric-delta{font-family:var(--fh);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;}
-.up{color:var(--coral);}.dn{color:var(--spring);}.neu{color:var(--muted);}
+/* ── PAGE HEADER ──────────────────────────────────────────────────────────── */
+.page-header { margin-bottom:28px; }
+.page-title { font-family:var(--fh); font-size:26px; font-weight:300; color:var(--pp-linen); margin-bottom:5px; line-height:1.2; display:flex; align-items:center; gap:10px; }
+.page-title__badge { font-family:var(--fh); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; background:rgba(220,190,76,0.15); color:var(--pp-mustard); border:1px solid rgba(220,190,76,0.25); padding:3px 8px; border-radius:4px; vertical-align:middle; }
+.page-subtitle { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.6; }
 
-/* HIGHLIGHTS */
-.highlights{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
-.hl{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;border-top:4px solid;}
-.hl.alert{border-top-color:var(--coral);}
-.hl.watch{border-top-color:var(--mustard);}
-.hl.opp{border-top-color:var(--spring);}
-.hl-type{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;margin-bottom:8px;}
-.hl.alert .hl-type{color:var(--coral);}.hl.watch .hl-type{color:var(--mustard);}.hl.opp .hl-type{color:var(--spring);}
-.hl-title{font-family:var(--fh);font-size:14px;font-weight:600;color:var(--linen);margin-bottom:10px;line-height:1.35;}
-.hl-body{font-family:var(--fb);font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px;}
-.hl-action{font-family:var(--fb);font-size:12px;color:var(--linen);background:rgba(198,235,76,0.07);border:1px solid rgba(198,235,76,0.18);border-left:3px solid var(--spring);border-radius:6px;padding:10px 13px;line-height:1.55;}
+/* ── SECTIONS ─────────────────────────────────────────────────────────────── */
+.section { margin-bottom:40px; }
+.section-header { margin-bottom:18px; }
+.section-eyebrow { display:block; font-family:var(--fh); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.16em; color:var(--pp-bubble); margin-bottom:5px; }
+.section-title { font-family:var(--fh); font-size:18px; font-weight:300; color:var(--pp-linen); margin-bottom:5px; }
+.section-desc { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.6; max-width:700px; }
 
-/* SIGNALS FEED */
-.signals-feed{display:flex;flex-direction:column;}
-.signal{display:grid;grid-template-columns:40px 1fr auto;gap:14px;align-items:start;padding:16px 0;border-bottom:1px solid var(--border);}
-.signal:last-child{border-bottom:none;}
-.sicon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.sicon svg{width:15px;height:15px;}
-.sicon.organic{background:rgba(60,110,113,0.2);color:var(--bubble);}
-.sicon.paid{background:rgba(225,136,94,0.15);color:var(--coral);}
-.sicon.social{background:rgba(220,190,76,0.15);color:var(--mustard);}
-.sicon.news{background:rgba(198,235,76,0.1);color:var(--spring);}
-.sicon.web{background:rgba(240,195,174,0.12);color:var(--nectar);}
-.sicon.alert-icon{background:rgba(225,136,94,0.18);color:var(--coral);}
-.scomp{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:3px;}
-.stitle{font-family:var(--fh);font-size:13px;font-weight:600;color:var(--linen);margin-bottom:5px;line-height:1.4;}
-.sinterp{font-family:var(--fb);font-size:12px;color:var(--muted);line-height:1.65;font-style:italic;}
-.stime{font-family:var(--fh);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--dove);white-space:nowrap;padding-top:2px;}
+/* ── CARDS ────────────────────────────────────────────────────────────────── */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px; margin-bottom:16px; }
+.card:last-child { margin-bottom:0; }
+.card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px; }
+.card-header__left { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.card-header__right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.card-title { font-family:var(--fh); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--pp-linen); }
+.card-note { font-family:var(--fh); font-size:11px; color:var(--muted); }
 
-/* TABLE */
-.data-table{width:100%;border-collapse:collapse;}
-.data-table th{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);text-align:left;padding:0 0 11px;border-bottom:1px solid var(--border);}
-.data-table td{padding:12px 0;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle;}
-.data-table tr:last-child td{border-bottom:none;}
-.kw{font-family:var(--fh);font-size:13px;font-weight:600;color:var(--linen);}
-.comp-tag{font-family:var(--fh);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);}
-.badge{display:inline-flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:11px;font-weight:700;padding:3px 9px;border-radius:4px;min-width:34px;}
-.badge.good{background:rgba(60,110,113,0.22);color:var(--bubble);}
-.badge.mid{background:rgba(220,190,76,0.15);color:var(--mustard);}
-.chg{font-family:var(--fh);font-size:11px;font-weight:700;}
-.chg.up{color:var(--coral);}.chg.flat{color:var(--muted);}
+/* Card modifiers */
+.card--guardrail { display:flex; flex-direction:column; gap:14px; }
+.card--advisor { border-left:3px solid rgba(143,176,181,0.3); }
+.card--stat { text-align:center; padding:20px 16px; }
+.card--narrative { border-left:3px solid var(--pp-current); }
+.card--web-change { }
+.card--email { }
+.card--campaign { }
+.card--meta-competitor { }
+.card--theme { }
+.card--posts { }
+.card--trends { padding:0; overflow:hidden; }
 
-/* AD CARDS */
-.ad-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
-.ad-card{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:17px;}
-.ad-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
-.ad-comp{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);}
-.ad-tag{font-family:var(--fh);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:3px 9px;border-radius:20px;background:rgba(225,136,94,0.14);color:var(--coral);}
-.ad-headline{font-family:var(--fh);font-size:14px;font-weight:700;color:var(--bubble);margin-bottom:5px;line-height:1.3;}
-.ad-desc{font-family:var(--fb);font-size:12px;color:var(--muted);line-height:1.6;}
-.ad-url{font-family:var(--fh);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--spring);margin-top:9px;display:block;}
+/* Card internals */
+.card__number { font-family:var(--fh); font-size:36px; font-weight:700; color:rgba(143,176,181,0.2); line-height:1; }
+.card__title { font-family:var(--fh); font-size:14px; font-weight:600; color:var(--pp-linen); margin-bottom:6px; }
+.card__body { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.65; margin-top:4px; }
+.card__stat-value { font-family:var(--fh); font-size:36px; font-weight:700; color:var(--pp-linen); letter-spacing:-1px; margin-bottom:6px; }
+.card__stat-label { font-family:var(--fh); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); }
+.card__url { font-family:var(--fh); font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:400px; }
 
-/* CONTENT SIGNALS */
-.csig{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:17px;margin-bottom:12px;}
-.csig-comp{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px;}
-.csig-title{font-family:var(--fh);font-size:14px;font-weight:600;color:var(--linen);margin-bottom:8px;}
-.csig-impl{font-family:var(--fb);font-size:12px;color:var(--mustard);line-height:1.6;font-style:italic;}
+/* ── CARD GRIDS ───────────────────────────────────────────────────────────── */
+.card-grid { display:grid; gap:14px; margin-bottom:16px; }
+.card-grid--2 { grid-template-columns:repeat(2,1fr); }
+.card-grid--3 { grid-template-columns:repeat(3,1fr); }
+.card-grid--4 { grid-template-columns:repeat(4,1fr); }
 
-/* TREND INSIGHTS */
-.tinsight{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--bubble);border-radius:10px;padding:16px;margin-bottom:12px;}
-.tinsight-label{font-family:var(--fh);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:var(--bubble);margin-bottom:6px;}
-.tinsight-text{font-family:var(--fb);font-size:12px;color:var(--muted);line-height:1.65;}
+/* ── DATA TABLE ───────────────────────────────────────────────────────────── */
+.data-table { width:100%; border-collapse:collapse; }
+.data-table thead tr { background:rgba(143,176,181,0.06); }
+.data-table th { font-family:var(--fh); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); text-align:left; padding:10px 16px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.data-table td { padding:13px 16px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; line-height:1.4; }
+.data-table tbody tr:last-child td { border-bottom:none; }
+.data-table tbody tr:hover { background:rgba(143,176,181,0.03); }
+.col-weight { font-family:var(--fh); font-weight:700; color:var(--pp-mustard); }
+.col-source { font-family:var(--fh); font-size:12px; color:var(--muted); }
+.col-note { font-family:var(--fh); font-size:11px; color:var(--muted); }
 
-/* COMP PILLS */
-.pills{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
-.pill{font-family:var(--fh);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;padding:5px 14px;border-radius:20px;border:1px solid var(--border2);cursor:pointer;color:var(--muted);transition:all 0.15s;display:flex;align-items:center;gap:7px;user-select:none;}
-.pill.active{background:rgba(60,110,113,0.18);border-color:var(--current);color:var(--linen);}
-.pill-dot{width:6px;height:6px;border-radius:50%;}
+/* ── BADGES ───────────────────────────────────────────────────────────────── */
+.badge { display:inline-flex; align-items:center; font-family:var(--fh); font-size:10px; font-weight:700; padding:3px 9px; border-radius:4px; text-transform:uppercase; letter-spacing:0.05em; }
+.badge-high       { background:rgba(109,191,143,0.15); color:#6dbf8f; }
+.badge-med        { background:rgba(220,190,76,0.15);  color:var(--pp-mustard); }
+.badge-low        { background:rgba(143,176,181,0.15); color:var(--muted); }
+.badge-alert      { background:rgba(225,136,94,0.15);  color:var(--pp-coral); }
+.badge-watch      { background:rgba(220,190,76,0.15);  color:var(--pp-mustard); }
+.badge-opportunity{ background:rgba(198,235,76,0.12);  color:var(--pp-spring); }
 
-::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:rgba(246,237,230,0.1);border-radius:4px;}
+/* ── STATUS PILLS ─────────────────────────────────────────────────────────── */
+.status-pill { display:inline-flex; align-items:center; font-family:var(--fh); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:3px 10px; border-radius:20px; }
+.status-pill--green  { background:rgba(109,191,143,0.15); color:#6dbf8f; }
+.status-pill--yellow { background:rgba(220,190,76,0.15);  color:var(--pp-mustard); }
+.status-pill--red    { background:rgba(201,79,79,0.15);   color:#c94f4f; }
+
+/* ── COMPETITOR TAG ───────────────────────────────────────────────────────── */
+.competitor-tag { display:inline-flex; align-items:center; font-family:var(--fh); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; padding:3px 9px; border-radius:4px; background:rgba(60,110,113,0.2); color:var(--pp-bubble); }
+
+/* ── PLATFORM TAG ─────────────────────────────────────────────────────────── */
+.platform-tag { display:inline-flex; align-items:center; font-family:var(--fh); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; padding:3px 9px; border-radius:4px; background:rgba(246,237,230,0.08); color:var(--muted); }
+
+/* ── SCORE RANGE (Key tab) ────────────────────────────────────────────────── */
+.score-range { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:20px; }
+.score-range__item { background:var(--surface); border-radius:8px; padding:16px 14px; border-top:3px solid transparent; }
+.score-range__item--calm     { border-top-color:var(--calm); }
+.score-range__item--active   { border-top-color:var(--active); }
+.score-range__item--elevated { border-top-color:var(--elevated); }
+.score-range__item--high     { border-top-color:var(--high); }
+.score-range__item--critical { border-top-color:var(--critical); }
+.score-range__band  { font-family:var(--fh); font-size:18px; font-weight:700; color:var(--pp-linen); margin-bottom:4px; }
+.score-range__label { font-family:var(--fh); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--pp-linen); margin-bottom:5px; }
+.score-range__desc  { font-family:var(--fh); font-size:11px; color:var(--muted); line-height:1.4; }
+
+/* ── COMPONENT DOTS (Key tab) ─────────────────────────────────────────────── */
+.component-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:8px; flex-shrink:0; vertical-align:middle; }
+.component-dot--social { background:#6dbf8f; }
+.component-dot--owned  { background:#5ba8c4; }
+.component-dot--paid   { background:var(--pp-mustard); }
+.component-dot--search { background:var(--pp-coral); }
+.component-dot--news   { background:var(--muted); }
+
+/* ── CONFIDENCE BADGES (aliased) ─────────────────────────────────────────── */
+/* .badge-high / .badge-med / .badge-low already cover confidence */
+
+/* ── SIGNAL CARDS ─────────────────────────────────────────────────────────── */
+.signal-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; margin-bottom:12px; }
+.signal-card:last-child { margin-bottom:0; }
+.signal-card__header { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+.signal-card__role { font-family:var(--fh); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--pp-sand); }
+.signal-card__title { font-family:var(--fh); font-size:14px; font-weight:600; color:var(--pp-linen); margin-bottom:6px; line-height:1.35; }
+.signal-card__body { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.65; }
+.signal-card__observation { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.65; margin-bottom:8px; font-style:italic; }
+
+/* ── EMPTY STATES ─────────────────────────────────────────────────────────── */
+.empty-state { font-family:var(--fb); font-size:12px; color:var(--muted); padding:24px; text-align:center; font-style:italic; line-height:1.6; }
+.empty-state--inline { padding:14px 0 4px; text-align:left; }
+
+/* ── FLAG ITEMS (Data Health) ─────────────────────────────────────────────── */
+.flag-item { display:flex; align-items:flex-start; gap:10px; padding:13px 16px; background:rgba(220,190,76,0.06); border:1px solid rgba(220,190,76,0.15); border-radius:8px; margin-bottom:8px; }
+.flag-item:last-child { margin-bottom:0; }
+.flag-item__icon { color:var(--pp-mustard); font-size:14px; flex-shrink:0; margin-top:1px; }
+.flag-item__text { font-family:var(--fb); font-size:12px; color:var(--pp-linen); line-height:1.6; }
+
+/* ── OVERVIEW HERO ────────────────────────────────────────────────────────── */
+.section--hero { background:var(--pp-current); border-radius:14px; padding:30px; margin-bottom:32px; position:relative; overflow:hidden; }
+.section--hero::after { content:''; position:absolute; bottom:-60px; right:-60px; width:240px; height:240px; border-radius:50%; background:rgba(246,237,230,0.04); pointer-events:none; }
+.hero-layout { display:grid; grid-template-columns:200px 1fr; gap:36px; align-items:center; }
+.hero-score-block { text-align:center; }
+.hero-score__label { font-family:var(--fh); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:0.14em; color:rgba(246,237,230,0.55); margin-bottom:6px; }
+.hero-score__number { font-family:var(--fh); font-size:96px; font-weight:700; line-height:1; letter-spacing:-4px; color:var(--pp-mustard); }
+.hero-score__number.status--calm     { color:var(--calm); }
+.hero-score__number.status--active   { color:#6dbf8f; }
+.hero-score__number.status--elevated { color:var(--pp-mustard); }
+.hero-score__number.status--high     { color:var(--pp-coral); }
+.hero-score__number.status--critical { color:#c94f4f; }
+.hero-score__status { font-family:var(--fh); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; margin-top:6px; }
+.hero-score__status.status--calm     { color:var(--calm); }
+.hero-score__status.status--active   { color:#6dbf8f; }
+.hero-score__status.status--elevated { color:var(--pp-mustard); }
+.hero-score__status.status--high     { color:var(--pp-coral); }
+.hero-score__status.status--critical { color:#c94f4f; }
+.hero-score__summary { font-family:var(--fb); font-size:12px; color:rgba(246,237,230,0.72); line-height:1.7; margin-top:12px; }
+.hero-components { display:flex; flex-direction:column; gap:12px; }
+.component-row { display:grid; grid-template-columns:120px 1fr 36px 36px; align-items:center; gap:10px; }
+.component-row__label { font-family:var(--fh); font-size:11px; font-weight:600; color:rgba(246,237,230,0.75); }
+.component-row__bar { height:6px; background:rgba(246,237,230,0.12); border-radius:3px; overflow:hidden; }
+.component-row__fill { height:100%; background:var(--pp-linen); border-radius:3px; width:0%; transition:width 0.6s ease; }
+.component-row__score { font-family:var(--fh); font-size:13px; font-weight:700; color:var(--pp-linen); text-align:right; }
+.component-row__weight { font-family:var(--fh); font-size:10px; color:rgba(246,237,230,0.4); text-align:right; }
+
+/* ── TOP DEVELOPMENTS ─────────────────────────────────────────────────────── */
+.development-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:14px; border-top:3px solid var(--border); }
+.development-card:last-child { margin-bottom:0; }
+.development-card--opportunity { border-top-color:var(--pp-spring); }
+.development-card--alert       { border-top-color:var(--pp-coral); }
+.development-card--watch       { border-top-color:var(--pp-mustard); }
+.development-card__header { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+.development-card__header-left { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.development-card__headline { font-family:var(--fh); font-size:15px; font-weight:600; color:var(--pp-linen); margin-bottom:8px; line-height:1.35; }
+.development-card__detail { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.7; margin-bottom:14px; }
+.development-card__action { background:rgba(198,235,76,0.07); border:1px solid rgba(198,235,76,0.18); border-left:3px solid var(--pp-spring); border-radius:6px; padding:11px 14px; }
+.development-card__role { display:block; font-family:var(--fh); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.12em; color:var(--pp-spring); margin-bottom:4px; }
+.development-card__action-text { font-family:var(--fb); font-size:12px; color:var(--pp-linen); line-height:1.6; }
+
+/* ── STRATEGIC NARRATIVE ──────────────────────────────────────────────────── */
+.narrative-text { font-family:var(--fb); font-size:14px; color:var(--pp-linen); line-height:1.8; }
+
+/* ── WEB CHANGE DIFF ──────────────────────────────────────────────────────── */
+.score-pill { display:inline-flex; align-items:center; justify-content:center; font-family:var(--fh); font-size:12px; font-weight:700; width:32px; height:32px; border-radius:50%; background:rgba(220,190,76,0.15); color:var(--pp-mustard); }
+.web-change__field { font-family:var(--fh); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:8px; }
+.web-change__diff { display:flex; flex-direction:column; gap:6px; }
+.web-change__added { display:flex; flex-direction:column; gap:3px; }
+.web-change__removed { display:flex; flex-direction:column; gap:3px; }
+.web-change__added span { font-family:var(--fb); font-size:12px; color:#6dbf8f; line-height:1.5; padding-left:12px; position:relative; }
+.web-change__added span::before { content:'+'; position:absolute; left:0; }
+.web-change__removed span { font-family:var(--fb); font-size:12px; color:var(--pp-coral); line-height:1.5; padding-left:12px; position:relative; text-decoration:line-through; opacity:0.7; }
+.web-change__removed span::before { content:'−'; position:absolute; left:0; text-decoration:none; }
+
+/* ── EMAIL INTELLIGENCE ───────────────────────────────────────────────────── */
+.email-count { font-family:var(--fh); font-size:11px; color:var(--muted); }
+.email-subjects { list-style:none; margin-bottom:14px; display:flex; flex-direction:column; gap:6px; }
+.email-subject { padding:9px 12px; background:rgba(246,237,230,0.04); border-radius:6px; border-left:2px solid var(--pp-bubble); }
+.email-subject__line { font-family:var(--fh); font-size:13px; color:var(--pp-linen); }
+.email-observation { margin-bottom:12px; }
+.email-observation__text { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.65; font-style:italic; }
+.email-observation__implication { font-family:var(--fb); font-size:12px; color:var(--pp-sand); line-height:1.65; margin-top:5px; }
+.email-pull-note { font-family:var(--fh); font-size:11px; color:var(--pp-bubble); border-top:1px solid var(--border); padding-top:12px; margin-top:4px; }
+
+/* ── CAMPAIGN EVIDENCE ────────────────────────────────────────────────────── */
+.campaign-evidence { list-style:none; display:flex; flex-direction:column; gap:5px; margin-top:10px; }
+.campaign-evidence__item { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.5; padding-left:14px; position:relative; }
+.campaign-evidence__item::before { content:'·'; position:absolute; left:4px; color:var(--pp-bubble); }
+
+/* ── SOCIAL METRICS ───────────────────────────────────────────────────────── */
+.col-platform { vertical-align:top; }
+.metric-primary { display:block; font-family:var(--fh); font-size:13px; font-weight:600; color:var(--pp-linen); }
+.metric-secondary { display:block; font-family:var(--fh); font-size:11px; color:var(--muted); margin-top:2px; }
+.post-samples { list-style:none; display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+.post-sample { font-family:var(--fb); font-size:12px; color:var(--muted); line-height:1.55; padding:8px 10px; background:rgba(246,237,230,0.03); border-radius:6px; }
+
+/* ── META ADS ─────────────────────────────────────────────────────────────── */
+.ad-rows { display:flex; flex-direction:column; gap:0; margin-top:4px; }
+.ad-row { padding:12px 0; border-bottom:1px solid var(--border); }
+.ad-row:last-child { border-bottom:none; padding-bottom:0; }
+.ad-row__body { font-family:var(--fb); font-size:12px; color:var(--pp-linen); line-height:1.55; margin-bottom:6px; }
+.ad-row__meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.ad-format-pill { display:inline-flex; align-items:center; font-family:var(--fh); font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; padding:2px 7px; border-radius:3px; background:rgba(143,176,181,0.12); color:var(--muted); }
+.ad-format-pill--video { background:rgba(225,136,94,0.12); color:var(--pp-coral); }
+.ad-format-pill--ugc   { background:rgba(198,235,76,0.1);  color:var(--pp-spring); }
+
+/* ── KEYWORD POSITIONS ────────────────────────────────────────────────────── */
+.keyword-cell { font-family:var(--fh); font-weight:600; color:var(--pp-linen); }
+.pos { display:inline-flex; align-items:center; justify-content:center; font-family:var(--fh); font-size:12px; font-weight:700; min-width:30px; height:24px; border-radius:4px; padding:0 6px; }
+.pos--high { background:rgba(109,191,143,0.15); color:#6dbf8f; }
+.pos--mid  { background:rgba(220,190,76,0.12);  color:var(--pp-mustard); }
+.pos--low  { background:rgba(143,176,181,0.08); color:var(--muted); }
+.pos--none { color:var(--border2); }
+.data-gap-notice { font-family:var(--fh); font-size:12px; color:var(--pp-mustard); background:rgba(220,190,76,0.07); border:1px solid rgba(220,190,76,0.18); border-radius:8px; padding:12px 16px; margin-bottom:16px; }
+.table-legend { display:flex; align-items:center; gap:10px; padding:12px 16px; border-top:1px solid var(--border); font-family:var(--fh); font-size:11px; color:var(--muted); margin-top:4px; flex-wrap:wrap; }
+
+/* ── GOOGLE TRENDS ────────────────────────────────────────────────────────── */
+.trends-wrap { padding:0; }
+.trends-wrap iframe { display:block; opacity:0; transition:opacity 0.3s; }
+.trends-wrap iframe[src] { opacity:1; }
+.trends-fallback { padding:20px; font-family:var(--fb); font-size:12px; color:var(--muted); }
+.trends-terms { display:flex; align-items:center; gap:6px; flex-wrap:wrap; padding:12px 16px; border-top:1px solid var(--border); font-family:var(--fh); font-size:11px; color:var(--muted); }
+.keyword-tag { display:inline-flex; align-items:center; font-family:var(--fh); font-size:11px; font-weight:600; padding:2px 8px; border-radius:3px; background:rgba(143,176,181,0.1); color:var(--muted); }
+
 </style>
 </head>
 <body>
 <div class="shell">
 
+<!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
 <nav class="sidebar">
   <div class="logo-wrap">
     <div class="logo">
-      <div class="logo-icon"><svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="#F6EDE6" stroke-width="1.5"/><line x1="9.7" y1="9.7" x2="14.3" y2="14.3" stroke="#F6EDE6" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <div class="logo-icon">
+        <svg viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4" stroke="#F6EDE6" stroke-width="1.5"/><line x1="9.7" y1="9.7" x2="14.3" y2="14.3" stroke="#F6EDE6" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
       <span class="logo-name">Scout</span>
     </div>
     <div class="logo-by">by Parallel Path</div>
   </div>
+
   <div class="client-badge">
-    <div class="client-badge-label">Monitoring client</div>
+    <div class="client-badge-label">Monitoring Client</div>
     <div class="client-badge-name" id="sidebar-client-name">Mattress Warehouse</div>
   </div>
+
   <div class="nav-section">Intelligence</div>
-  <div class="nav-item active" onclick="showPage('overview',this)">
+
+  <div class="nav-item active" onclick="showTab('overview',this)">
     <svg viewBox="0 0 15 15" fill="none"><rect x="1" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8.5" y="1" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8.5" y="8.5" width="5.5" height="5.5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
     Overview
   </div>
-  <div class="nav-item" onclick="showPage('organic',this)">
-    <svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1v13M1 7.5h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.3"/></svg>
-    Organic Search
+  <div class="nav-item" onclick="showTab('search-intelligence',this)">
+    <svg viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    Search Intelligence
   </div>
-  <div class="nav-item" onclick="showPage('paid',this)">
+  <div class="nav-item" onclick="showTab('paid-monitoring',this)">
     <svg viewBox="0 0 15 15" fill="none"><rect x="1" y="3" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7.5h5M7.5 5.5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-    Paid Search
+    Paid Monitoring
   </div>
-  <div class="nav-item" onclick="showPage('contentweb',this)">
-    <svg viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 6h7M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-    Content & Web
+  <div class="nav-item" onclick="showTab('social-presence',this)">
+    <svg viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.3"/><path d="M2.5 13c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Social Presence
   </div>
-  <div class="nav-item" onclick="showPage('trends',this)">
-    <svg viewBox="0 0 15 15" fill="none"><path d="M1 11L4 7l3 2 3-5 4 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    Demand Trends
+  <div class="nav-item" onclick="showTab('owned-channels',this)">
+    <svg viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="10" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 12v2M10 12v2M3 14h9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Owned Channels
   </div>
-  <div class="nav-item" onclick="showPage('signals',this)">
-    <svg viewBox="0 0 15 15" fill="none"><path d="M1 11L5 5l3 4 2-3 4 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    All Signals
+
+  <div class="nav-section">Internal</div>
+
+  <div class="nav-item nav-item--internal" onclick="showTab('data-health',this)">
+    <svg viewBox="0 0 15 15" fill="none"><path d="M1 8l3-5 3 7 2-4 2 3 3-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Data Health
   </div>
+  <div class="nav-item nav-item--internal" onclick="showTab('key',this)">
+    <svg viewBox="0 0 15 15" fill="none"><circle cx="5.5" cy="7.5" r="3.5" stroke="currentColor" stroke-width="1.3"/><path d="M8.5 7.5h5M11.5 5.5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+    Key
+  </div>
+
   <div class="sidebar-footer">
-    <div class="week-badge"><div class="week-dot"></div><span id="sidebar-week">Week of Mar 18, 2026</span></div>
+    <div class="week-badge">
+      <div class="week-dot"></div>
+      <span id="sidebar-week">Week of —</span>
+    </div>
   </div>
 </nav>
 
+<!-- ── MAIN ──────────────────────────────────────────────────────────────── -->
 <main class="main">
+
   <div class="topbar">
-    <div class="topbar-title" id="topbar-title">Mattress Warehouse — Competitive Intelligence</div>
+    <div class="topbar-title" id="topbar-client">Mattress Warehouse — Competitive Intelligence</div>
     <div class="topbar-right">
-      <div class="live-chip"><div class="live-dot"></div>Live Data</div>
-      <div class="date-chip" id="topbar-date">Mar 18, 2026</div>
+      <div class="live-chip"><div class="live-dot"></div> Live Data</div>
+      <div class="date-chip" id="topbar-date">—</div>
     </div>
   </div>
 
-  <!-- OVERVIEW -->
-  <div id="page-overview" class="page active">
-    <div class="pc">
-      <div class="hero">
-        <div class="hero-score-wrap">
-          <div class="hero-eyebrow">Competitive Pressure Score</div>
-          <div class="hero-score" id="hero-score">78</div>
-          <div class="hero-delta" id="hero-delta">↑ +15 from last week</div>
+  <!-- TAB 1: OVERVIEW -->
+  <div class="tab-panel active" id="tab-overview">
+    <div class="page-header">
+      <h1 class="page-title js-client-name">Mattress Warehouse</h1>
+      <p class="page-subtitle">Competitive Intelligence — Week of <span class="js-week-of"></span></p>
+    </div>
+    <section class="section section--hero">
+      <div class="hero-layout">
+        <div class="hero-score-block">
+          <div class="hero-score__label">Competitive Pressure Score</div>
+          <div class="hero-score__number js-pressure-score">—</div>
+          <div class="hero-score__status js-pressure-status"></div>
+          <p class="hero-score__summary js-executive-summary"></p>
         </div>
-        <div>
-          <div class="hero-title">Sleep Number's financial crisis creates a rare market opportunity this week</div>
-          <div class="hero-desc" id="hero-desc">Sleep Number filed going concern warnings with bankruptcy risk while sales slid 16%. Mattress Firm maintains search dominance but faces class action lawsuits over fake sales practices.</div>
-          <div class="breakdown">
-            <div class="bitem"><div class="bitem-label">Organic</div><div class="bitem-val" style="color:var(--coral)" id="score-organic">75</div></div>
-            <div class="bitem"><div class="bitem-label">Paid</div><div class="bitem-val" style="color:var(--mustard)" id="score-paid">85</div></div>
-            <div class="bitem"><div class="bitem-label">Content</div><div class="bitem-val" style="color:var(--bubble)" id="score-content">70</div></div>
-            <div class="bitem"><div class="bitem-label">Social</div><div class="bitem-val" style="color:var(--spring)" id="score-social">65</div></div>
+        <div class="hero-components">
+          <div class="component-row" data-component="social_content_investment">
+            <div class="component-row__label">Social &amp; Content</div>
+            <div class="component-row__bar"><div class="component-row__fill"></div></div>
+            <div class="component-row__score"></div>
+            <div class="component-row__weight">30%</div>
+          </div>
+          <div class="component-row" data-component="owned_channel_activity">
+            <div class="component-row__label">Owned Channel</div>
+            <div class="component-row__bar"><div class="component-row__fill"></div></div>
+            <div class="component-row__score"></div>
+            <div class="component-row__weight">25%</div>
+          </div>
+          <div class="component-row" data-component="paid_investment">
+            <div class="component-row__label">Paid</div>
+            <div class="component-row__bar"><div class="component-row__fill"></div></div>
+            <div class="component-row__score"></div>
+            <div class="component-row__weight">20%</div>
+          </div>
+          <div class="component-row" data-component="search_presence">
+            <div class="component-row__label">Search</div>
+            <div class="component-row__bar"><div class="component-row__fill"></div></div>
+            <div class="component-row__score"></div>
+            <div class="component-row__weight">15%</div>
+          </div>
+          <div class="component-row" data-component="news_pr">
+            <div class="component-row__label">News &amp; PR</div>
+            <div class="component-row__bar"><div class="component-row__fill"></div></div>
+            <div class="component-row__score"></div>
+            <div class="component-row__weight">10%</div>
           </div>
         </div>
       </div>
-      <div class="metric-grid">
-        <div class="metric"><div class="metric-label">Competitor Web Changes</div><div class="metric-val">23</div><div class="metric-delta up">↑ Detected this week</div></div>
-        <div class="metric"><div class="metric-label">High-Volume Keyword Overlaps</div><div class="metric-val">5</div><div class="metric-delta neu">→ Tracked targets</div></div>
-        <div class="metric"><div class="metric-label">News Mentions (competitors)</div><div class="metric-val">12</div><div class="metric-delta up">↑ Sleep Number spike</div></div>
-        <div class="metric"><div class="metric-label">Pressure Score Delta</div><div class="metric-val">+15</div><div class="metric-delta up">↑ Elevated vs last week</div></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">This Week</span>
+        <h2 class="section-title">Top Developments</h2>
       </div>
-      <div class="sec-header">
-        <div class="sec-title">Top Developments This Week</div>
-        <div class="sec-meta">Live data · AI-synthesized · Mar 18, 2026</div>
+      <div id="top-developments-container"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Strategic Read</span>
+        <h2 class="section-title">What It Means</h2>
       </div>
-      <div class="highlights" id="developments-grid">
-        <div class="hl alert">
-          <div class="hl-type">🔴 Alert — Immediate</div>
-          <div class="hl-title">Sleep Number files bankruptcy going concern warning</div>
-          <div class="hl-body">Sleep Number filed going concern warnings stating bankruptcy is possible, with sales sliding 16% while launching new product lines.</div>
-          <div class="hl-action">Target Sleep Number customers immediately with trade-in offers and competitive messaging. This window won't stay open long.</div>
-        </div>
-        <div class="hl watch">
-          <div class="hl-type">🟡 Watch — This Week</div>
-          <div class="hl-title">Mattress Firm hit with class action suits over fake sales</div>
-          <div class="hl-body">Multiple class action suits allege fake limited-time sales practices. Despite legal issues, Mattress Firm maintains 21.88% organic traffic share.</div>
-          <div class="hl-action">Prepare messaging highlighting Mattress Warehouse's transparent pricing as a direct contrast to Mattress Firm's legal exposure.</div>
-        </div>
-        <div class="hl opp">
-          <div class="hl-type">🟢 Opportunity — This Week</div>
-          <div class="hl-title">Sleep Number signs Travis Kelce during bankruptcy crisis</div>
-          <div class="hl-body">Sleep Number announced Travis Kelce as strategic partner while issuing bankruptcy warnings — a significant misalignment of priorities.</div>
-          <div class="hl-action">Position against celebrity endorsement spend during quality issues. Amplify Mattress Warehouse's local, customer-first story.</div>
-        </div>
+      <div class="card card--narrative">
+        <p class="narrative-text js-strategic-narrative"></p>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Trend</span>
+        <h2 class="section-title">Competitive Pressure — 8 Weeks</h2>
       </div>
       <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-eyebrow">Pressure Trend</div>
-            <div class="card-title">Competitive Pressure Score — 8 Weeks</div>
-            <div class="card-sub">Weekly composite · real data from Mar 18 onward · prior weeks estimated</div>
-          </div>
-        </div>
-        <div class="chart-h"><canvas id="pressureChart"></canvas></div>
+        <canvas id="pressure-trend-chart" height="80"></canvas>
       </div>
-    </div>
+    </section>
   </div>
 
-  <!-- ORGANIC -->
-  <div id="page-organic" class="page">
-    <div class="pc">
-      <div class="eyebrow">Intelligence</div>
-      <div class="page-title">Organic Search</div>
-      <div class="page-sub">Keyword movements and search presence across Mattress Firm, Sleep Number, Purple, and Casper</div>
-      <div class="sec-header">
-        <div class="sec-title">Keyword Movers This Week</div>
-        <div class="sec-meta">Live Semrush data · overlap with Mattress Warehouse flagged</div>
+  <!-- TAB 2: SEARCH INTELLIGENCE -->
+  <div class="tab-panel" id="tab-search-intelligence">
+    <div class="page-header">
+      <h1 class="page-title">Search Intelligence</h1>
+      <p class="page-subtitle">Organic keyword positions across 10 tracked terms, Google Trends comparison, and search recommendations</p>
+    </div>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Semrush Live Data</span>
+        <h2 class="section-title">Keyword Position Comparison</h2>
+        <p class="section-desc">Organic ranking positions for 10 tracked non-brand terms. MW position compared against all four competitors. Positions update weekly.</p>
+      </div>
+      <div class="card" id="keyword-table-card"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Google Trends — US · 90 Days</span>
+        <h2 class="section-title">Search Interest Over Time</h2>
+        <p class="section-desc">Relative search interest for the 10 tracked keywords. Reflects consumer demand trends, not competitive positions.</p>
+      </div>
+      <div class="card card--trends" id="trends-container"></div>
+    </section>
+    <section class="section" id="keyword-movements-section">
+      <div class="section-header">
+        <span class="section-eyebrow">Week over Week</span>
+        <h2 class="section-title">Notable Keyword Movements</h2>
+      </div>
+      <div id="keyword-movements-container"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Recommendations</span>
+        <h2 class="section-title">Search Recommendations</h2>
+      </div>
+      <div id="search-recs-container"></div>
+    </section>
+  </div>
+
+  <!-- TAB 3: PAID MONITORING -->
+  <div class="tab-panel" id="tab-paid-monitoring">
+    <div class="page-header">
+      <h1 class="page-title">Paid Monitoring</h1>
+      <p class="page-subtitle">Competitor Meta Ads creative intelligence, paid keyword trends, and paid media recommendations</p>
+    </div>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Meta Ads Library</span>
+        <h2 class="section-title">Active Ad Intelligence</h2>
+        <p class="section-desc">Sampled from Meta's Ad Library this week. Library count reflects all active ads — we analyze a 20-ad sample for creative intelligence.</p>
+      </div>
+      <div id="meta-ads-container"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Semrush Estimated Data — Directional Only</span>
+        <h2 class="section-title">Paid Keyword Count Trend</h2>
+        <p class="section-desc">Estimated number of active paid keywords per competitor over time. Use for directional trends, not absolute comparisons.</p>
       </div>
       <div class="card">
-        <table class="data-table" id="keyword-table">
-          <thead><tr><th>Keyword</th><th>Monthly Volume</th><th>MW Position</th><th>Mattress Firm</th><th>Sleep Number</th><th>Purple</th><th>Casper</th></tr></thead>
-          <tbody id="keyword-tbody">
-            <tr><td><span class="kw">mattress firm</span></td><td><span class="comp-tag">Mattress Firm</span></td><td><span class="badge good">#1</span></td><td><span class="chg flat">→ 0</span></td><td>550,000</td><td><span style="color:var(--coral);font-family:var(--fh);font-size:11px;font-weight:600">Brand overlap</span></td></tr>
-            <tr><td><span class="kw">mattress stores</span></td><td><span class="comp-tag">Mattress Firm</span></td><td><span class="badge good">#2</span></td><td><span class="chg up">↑ +1</span></td><td>33,100</td><td><span style="color:var(--coral);font-family:var(--fh);font-size:11px;font-weight:600">Direct overlap</span></td></tr>
-            <tr><td><span class="kw">purple mattress</span></td><td><span class="comp-tag">Purple</span></td><td><span class="badge good">#1</span></td><td><span class="chg flat">→ 0</span></td><td>201,000</td><td><span style="color:var(--mustard);font-family:var(--fh);font-size:11px;font-weight:600">Carried in store</span></td></tr>
-            <tr><td><span class="kw">queen mattress dimensions</span></td><td><span class="comp-tag">Sleep Number</span></td><td><span class="badge mid">#6</span></td><td><span class="chg up">↑ +4</span></td><td>40,500</td><td><span style="color:var(--spring);font-family:var(--fh);font-size:11px;font-weight:600">Gap opportunity</span></td></tr>
-            <tr><td><span class="kw">sleep number</span></td><td><span class="comp-tag">Sleep Number</span></td><td><span class="badge good">#1</span></td><td><span class="chg flat">→ 0</span></td><td>135,000</td><td><span style="color:var(--dove);font-family:var(--fh);font-size:11px;font-weight:600">No overlap</span></td></tr>
+        <canvas id="paid-trend-chart" height="100"></canvas>
+        <div id="paid-trend-empty" class="empty-state" style="display:none">No paid keyword trend data available this week.</div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Recommendations</span>
+        <h2 class="section-title">Paid Media Recommendations</h2>
+      </div>
+      <div id="paid-recs-container"></div>
+    </section>
+  </div>
+
+  <!-- TAB 4: SOCIAL PRESENCE -->
+  <div class="tab-panel" id="tab-social-presence">
+    <div class="page-header">
+      <h1 class="page-title">Social Presence</h1>
+      <p class="page-subtitle">Competitor social activity across Instagram, TikTok, Facebook, and YouTube — post volume, engagement, and content themes</p>
+    </div>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">This Week</span>
+        <h2 class="section-title">Social Metrics by Competitor</h2>
+        <p class="section-desc">Post volume and engagement across all monitored platforms. Follower counts collected at time of scrape.</p>
+      </div>
+      <div class="card">
+        <table class="data-table" id="social-metrics-table">
+          <thead>
+            <tr>
+              <th>Competitor</th>
+              <th>Instagram — Posts / Followers / Avg Likes</th>
+              <th>TikTok — Posts / Avg Views</th>
+              <th>Facebook — Posts / Avg Likes</th>
+              <th>YouTube — Uploads (14d)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Content Analysis</span>
+        <h2 class="section-title">Content Themes This Week</h2>
+        <p class="section-desc">Recurring themes identified across competitor social posts.</p>
+      </div>
+      <div id="content-themes-container"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Sample Content</span>
+        <h2 class="section-title">Recent Posts by Competitor</h2>
+        <p class="section-desc">Recent post copy from each competitor's highest-volume platform this week.</p>
+      </div>
+      <div class="card-grid card-grid--2" id="recent-posts-container"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Recommendations</span>
+        <h2 class="section-title">Social Content Recommendations</h2>
+      </div>
+      <div id="social-recs-container"></div>
+    </section>
+  </div>
+
+  <!-- TAB 5: OWNED CHANNELS -->
+  <div class="tab-panel" id="tab-owned-channels">
+    <div class="page-header">
+      <h1 class="page-title">Owned Channels</h1>
+      <p class="page-subtitle">Web changes, competitor email intelligence, and coordinated campaign signals</p>
+    </div>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Most Predictive</span>
+        <h2 class="section-title">Competitor Web Changes</h2>
+        <p class="section-desc">Significant page changes detected across competitor sites this week, sorted by significance score. Site copy, CTAs, and pricing changes often precede broader campaign activity.</p>
+      </div>
+      <div id="web-changes-container"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">CRM Monitoring</span>
+        <h2 class="section-title">Competitor Email Intelligence</h2>
+        <p class="section-desc">Emails received this week via monitored competitor lists. Subject lines reflect current promotional messaging and urgency tactics. To read any full email, ask Jackson to pull it by subject line.</p>
+      </div>
+      <div id="email-intelligence-container"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Campaign Detection</span>
+        <h2 class="section-title">Coordinated Campaign Signals</h2>
+        <p class="section-desc">When a competitor's social posts, paid ads, web changes, and emails align around a shared theme, Scout flags it as a likely coordinated campaign. These are inferences, not confirmations.</p>
+      </div>
+      <div id="campaign-signals-container"></div>
+    </section>
+  </div>
+
+  <!-- TAB 6: DATA HEALTH -->
+  <div class="tab-panel" id="tab-data-health">
+    <div class="page-header">
+      <h1 class="page-title">Data Health <span class="page-title__badge">Internal</span></h1>
+      <p class="page-subtitle">Collection status, signal volume, and synthesis quality flags — generated <span class="js-generated-at"></span></p>
+    </div>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Collectors</span>
+        <h2 class="section-title">Collection Status</h2>
+        <p class="section-desc">Status of each data source from the most recent Monday run.</p>
+      </div>
+      <div class="card">
+        <table class="data-table" id="collection-status-table">
+          <thead><tr><th>Source</th><th>Status</th><th>Signals This Week</th><th>Last Run</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Volume</span>
+        <h2 class="section-title">Signal Counts This Week</h2>
+      </div>
+      <div class="card-grid card-grid--4" id="signal-counts-grid"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Quality</span>
+        <h2 class="section-title">Data Quality Flags</h2>
+        <p class="section-desc">Issues identified by the Analyst during synthesis. These represent gaps in signal coverage that may affect confidence.</p>
+      </div>
+      <div id="quality-flags-container"></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Synthesis</span>
+        <h2 class="section-title">Advisors Activated</h2>
+        <p class="section-desc">Role perspectives applied during this week's Strategist synthesis call.</p>
+      </div>
+      <div class="card-grid card-grid--4" id="advisors-activated-grid"></div>
+    </section>
+  </div>
+
+  <!-- TAB 7: KEY -->
+  <div class="tab-panel" id="tab-key">
+    <div class="page-header">
+      <h1 class="page-title">Key</h1>
+      <p class="page-subtitle">Scoring methodology, AI rules, and advisory board — how Scout works</p>
+    </div>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Scoring</span>
+        <h2 class="section-title">Competitive Pressure Score</h2>
+        <p class="section-desc">A 0–100 composite score calculated weekly from five signal categories. Each component is weighted by its predictive reliability and recency of data.</p>
+      </div>
+      <div class="score-range">
+        <div class="score-range__item score-range__item--calm"><div class="score-range__band">0–25</div><div class="score-range__label">Calm</div><div class="score-range__desc">Low activity across all channels</div></div>
+        <div class="score-range__item score-range__item--active"><div class="score-range__band">26–50</div><div class="score-range__label">Active</div><div class="score-range__desc">Normal competitive movement</div></div>
+        <div class="score-range__item score-range__item--elevated"><div class="score-range__band">51–75</div><div class="score-range__label">Elevated</div><div class="score-range__desc">Significant multi-channel activity</div></div>
+        <div class="score-range__item score-range__item--high"><div class="score-range__band">76–90</div><div class="score-range__label">High</div><div class="score-range__desc">Coordinated competitive push likely</div></div>
+        <div class="score-range__item score-range__item--critical"><div class="score-range__band">91–100</div><div class="score-range__label">Critical</div><div class="score-range__desc">Major event requiring immediate response</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Score Components</span><span class="card-note">Weights reflect data reliability and strategic impact</span></div>
+        <table class="data-table">
+          <thead><tr><th>Component</th><th>Weight</th><th>Signal Sources</th><th>Confidence</th></tr></thead>
+          <tbody>
+            <tr><td><span class="component-dot component-dot--social"></span>Social &amp; Content Investment</td><td class="col-weight">30%</td><td class="col-source">Instagram, TikTok, Facebook, YouTube via Apify</td><td><span class="badge badge-high">High — real data</span></td></tr>
+            <tr><td><span class="component-dot component-dot--owned"></span>Owned Channel Activity</td><td class="col-weight">25%</td><td class="col-source">Web changes + competitor email CRM monitoring</td><td><span class="badge badge-high">High — real data</span></td></tr>
+            <tr><td><span class="component-dot component-dot--paid"></span>Paid Investment</td><td class="col-weight">20%</td><td class="col-source">Meta Ads Library + Semrush paid keyword estimates</td><td><span class="badge badge-med">Medium-High</span></td></tr>
+            <tr><td><span class="component-dot component-dot--search"></span>Search Presence</td><td class="col-weight">15%</td><td class="col-source">Semrush organic positions + Google Trends</td><td><span class="badge badge-med">Medium — estimated</span></td></tr>
+            <tr><td><span class="component-dot component-dot--news"></span>News &amp; PR</td><td class="col-weight">10%</td><td class="col-source">Google News RSS — brand-qualified queries</td><td><span class="badge badge-low">Medium — reactive</span></td></tr>
           </tbody>
         </table>
       </div>
-    </div>
-  </div>
-
-  <!-- PAID -->
-  <div id="page-paid" class="page">
-    <div class="pc">
-      <div class="eyebrow">Intelligence</div>
-      <div class="page-title">Paid Search</div>
-      <div class="page-sub">Ad spend estimates and paid keyword landscape across competitors</div>
-      <div class="card">
-        <div class="card-header">
-          <div><div class="card-eyebrow">Paid Landscape</div><div class="card-title">Paid Keyword Count by Competitor</div><div class="card-sub">Semrush estimated paid keyword count · 12-week trend</div></div>
-          <div class="legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#8CBEC6"></div>Mattress Firm</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#E1885E"></div>Sleep Number</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#DCBE4C"></div>Purple</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#C6EB4C"></div>Casper</div>
-          </div>
-        </div>
-        <div class="chart-h tall"><canvas id="paidChart"></canvas></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Reliability</span>
+        <h2 class="section-title">AI Guardrails</h2>
+        <p class="section-desc">Three hard rules applied to every synthesis. These constrain the model to only what the data supports — no extrapolation, no hallucination.</p>
       </div>
-      <div class="sec-header"><div class="sec-title">Strategic Paid Observations</div><div class="sec-meta">Synthesized from Semrush data</div></div>
-      <div class="card" style="padding:0">
-        <div class="signals-feed" style="padding:0 22px">
-          <div class="signal">
-            <div class="sicon paid"><svg viewBox="0 0 15 15" fill="none"><rect x="1" y="3" width="13" height="9" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M5 7.5h5M7.5 5.5v4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
-            <div><div class="scomp">Mattress Firm · Paid Search</div><div class="stitle">Maintains dominant paid presence despite class action lawsuits</div><div class="sinterp">Their 21.88% organic traffic share reinforced by paid coverage creates dual-channel dominance that's difficult to displace short-term.</div></div>
-            <div class="stime">This week</div>
-          </div>
-          <div class="signal">
-            <div class="sicon alert-icon"><svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1L14 13H1L7.5 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7.5 6v3.5M7.5 11v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
-            <div><div class="scomp">Sleep Number · Paid Search</div><div class="stitle">Paid activity likely to decline as bankruptcy concerns intensify</div><div class="sinterp">Brands approaching crisis typically reduce ad spend — watch for impression share drops as a leading indicator of further deterioration.</div></div>
-            <div class="stime">Watch</div>
-          </div>
-          <div class="signal">
-            <div class="sicon news"><svg viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 6h7M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div>
-            <div><div class="scomp">Purple · Paid Search</div><div class="stitle">Stable paid presence with new bed frame collection support</div><div class="sinterp">Purple's consistent messaging and product expansion into complete sleep solutions represents a deliberate move to increase average order value.</div></div>
-            <div class="stime">This week</div>
-          </div>
-        </div>
+      <div class="card-grid card-grid--3">
+        <div class="card card--guardrail"><div class="card__number">01</div><h3 class="card__title">Citation Enforcement</h3><p class="card__body">The Analyst may only reference competitors, keywords, and numbers present in that week's collected signals. It cannot introduce facts from training data or memory.</p></div>
+        <div class="card card--guardrail"><div class="card__number">02</div><h3 class="card__title">Confidence Gating</h3><p class="card__body">If fewer than 3 signals exist for a competitor in a given category, the output flags the gap rather than speculating. Thin data produces a quality flag, not a fabricated observation.</p></div>
+        <div class="card card--guardrail"><div class="card__number">03</div><h3 class="card__title">Schema Enforcement</h3><p class="card__body">All output is constrained to a defined JSON schema. Named fields, typed values, bounded arrays. This limits fabrication surface area and ensures the dashboard always has structured data to render.</p></div>
       </div>
-    </div>
-  </div>
-
-  <!-- CONTENT & WEB -->
-  <div id="page-contentweb" class="page">
-    <div class="pc">
-      <div class="eyebrow">Intelligence</div>
-      <div class="page-title">Content & Web Changes</div>
-      <div class="page-sub">23 significant page changes detected across competitor websites this week · 55 pages monitored</div>
-      <div class="metric-grid">
-        <div class="metric"><div class="metric-label">Total Page Snapshots</div><div class="metric-val">55</div><div class="metric-delta neu">→ Baseline captured</div></div>
-        <div class="metric"><div class="metric-label">Significant Changes</div><div class="metric-val">23</div><div class="metric-delta up">↑ High activity week</div></div>
-        <div class="metric"><div class="metric-label">Competitors Monitored</div><div class="metric-val">4</div><div class="metric-delta neu">→ All tracked</div></div>
-        <div class="metric"><div class="metric-label">Highest Activity</div><div class="metric-val">Sleep №</div><div class="metric-delta up">↑ Crisis messaging</div></div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Synthesis</span>
+        <h2 class="section-title">Advisory Board</h2>
+        <p class="section-desc">The Strategist call applies seven domain perspectives to every briefing. Recommendations are attributed by role title — advisors are never named in client-facing output.</p>
       </div>
-      <div class="sec-header"><div class="sec-title">Content Signals This Week</div><div class="sec-meta">Strategic implications · AI-synthesized</div></div>
-      <div id="content-signals-container">
-        <div class="csig"><div class="csig-comp">Sleep Number</div><div class="csig-title">Five new mattresses launched — portfolio redesign during going concern warnings</div><div class="csig-impl">Attempting product innovation during a bankruptcy warning signals desperation rather than strength. An opportunity for Mattress Warehouse to position on reliability and longevity.</div></div>
-        <div class="csig"><div class="csig-comp">Mattress Firm</div><div class="csig-title">AI-powered store associate efficiency tools rolled out at scale</div><div class="csig-impl">Operational technology investment amid legal costs. Their in-store experience may become more automated — making Mattress Warehouse's human-first service model a clearer differentiator.</div></div>
-        <div class="csig"><div class="csig-comp">Purple</div><div class="csig-title">New bed frame collections launched — expanding into complete sleep ecosystem</div><div class="csig-impl">Purple's expansion beyond mattresses increases their DTC stickiness. Ensure new frame products are represented in store before they drive customers to Purple's direct channel.</div></div>
-        <div class="csig"><div class="csig-comp">Sleep Number</div><div class="csig-title">Travis Kelce partnership announced amid bankruptcy proceedings</div><div class="csig-impl">Signing a celebrity while issuing going concern warnings creates a credibility contradiction consumer media will amplify. Opportunity to contrast Mattress Warehouse's grounded brand story.</div></div>
+      <div class="card-grid card-grid--4">
+        <div class="card card--advisor"><div class="card__title">SEO Strategist</div><p class="card__body">Organic search opportunity, content gap analysis, keyword targeting and intent mapping</p></div>
+        <div class="card card--advisor"><div class="card__title">Organic Growth Strategist</div><p class="card__body">Community-driven growth, earned media, brand authority and audience trust signals</p></div>
+        <div class="card card--advisor"><div class="card__title">Paid Media Specialist</div><p class="card__body">Social ad creative strategy, audience targeting, platform-specific paid tactics</p></div>
+        <div class="card card--advisor"><div class="card__title">Paid Search Specialist</div><p class="card__body">SEM competitive dynamics, bidding signals, keyword overlap and paid search positioning</p></div>
+        <div class="card card--advisor"><div class="card__title">Retail Strategist</div><p class="card__body">In-store experience, retail sales signals, physical presence and local competitive dynamics</p></div>
+        <div class="card card--advisor"><div class="card__title">Social Media Strategist</div><p class="card__body">Content velocity, platform-native formats, influencer signals and organic social momentum</p></div>
+        <div class="card card--advisor"><div class="card__title">Brand Strategist</div><p class="card__body">Positioning shifts, messaging consistency, brand architecture and long-term identity signals</p></div>
       </div>
-    </div>
-  </div>
-
-  <!-- DEMAND TRENDS -->
-  <div id="page-trends" class="page">
-    <div class="pc">
-      <div class="eyebrow">Intelligence</div>
-      <div class="page-title">Demand Trends</div>
-      <div class="page-sub">Google Trends search interest — brand and category level, 90-day rolling window</div>
-      <div class="card">
-        <div class="card-header">
-          <div><div class="card-eyebrow">Brand Interest</div><div class="card-title">Search Interest Over Time — All Competitors</div><div class="card-sub">Google Trends relative interest (0–100) · US · 13 weeks</div></div>
-          <div class="legend">
-            <div class="legend-item"><div class="legend-dot" style="background:#8CBEC6"></div>Mattress Firm</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#E1885E"></div>Sleep Number</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#DCBE4C"></div>Purple</div>
-            <div class="legend-item"><div class="legend-dot" style="background:#C6EB4C"></div>Casper</div>
-          </div>
-        </div>
-        <div class="chart-h tall"><canvas id="trendsChart"></canvas></div>
-      </div>
-      <div class="tinsight"><div class="tinsight-label">Key Insight — Sleep Number</div><div class="tinsight-text">Sleep Number's search interest is expected to spike as bankruptcy news spreads. This creates a window where branded search traffic is high but purchase intent is low — consumers researching alternatives. Mattress Warehouse should ensure visibility in "Sleep Number alternative" searches immediately.</div></div>
-      <div class="tinsight"><div class="tinsight-label">Key Insight — Category Demand</div><div class="tinsight-text">Mattress category search demand peaks in Q1 around tax refund season. The current disruption from Sleep Number's financial crisis is happening at an advantageous time — consumer purchase intent is seasonally elevated.</div></div>
-      <div class="two-col">
-        <div class="card" style="margin-bottom:0">
-          <div class="card-header"><div><div class="card-eyebrow">Category</div><div class="card-title">Category Keyword Trends</div></div></div>
-          <div class="chart-h"><canvas id="categoryTrendsChart"></canvas></div>
-        </div>
-        <div class="card" style="margin-bottom:0">
-          <div class="card-header"><div><div class="card-eyebrow">Geography</div><div class="card-title">Interest by US Region</div></div></div>
-          <div class="chart-h"><canvas id="geoChart"></canvas></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ALL SIGNALS -->
-  <div id="page-signals" class="page">
-    <div class="pc">
-      <div class="eyebrow">Intelligence</div>
-      <div class="page-title">All Signals</div>
-      <div class="page-sub">Complete intelligence feed · week of Mar 18, 2026 · live data · AI-synthesized by Scout</div>
-      <div class="pills">
-        <div class="pill active"><div class="pill-dot" style="background:var(--current)"></div>All</div>
-        <div class="pill"><div class="pill-dot" style="background:var(--bubble)"></div>Mattress Firm</div>
-        <div class="pill"><div class="pill-dot" style="background:var(--coral)"></div>Sleep Number</div>
-        <div class="pill"><div class="pill-dot" style="background:var(--mustard)"></div>Purple</div>
-        <div class="pill"><div class="pill-dot" style="background:var(--spring)"></div>Casper</div>
+    </section>
+    <section class="section">
+      <div class="section-header">
+        <span class="section-eyebrow">Infrastructure</span>
+        <h2 class="section-title">Data Collection</h2>
+        <p class="section-desc">Scout runs every Monday at 6am ET. All collectors write to Supabase. The Edge Function serves fresh data to this dashboard on each load.</p>
       </div>
       <div class="card">
-        <div class="signals-feed" id="all-signals-feed">
-          <div class="signal"><div class="sicon alert-icon"><svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1L14 13H1L7.5 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7.5 6v3.5M7.5 11v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div><div><div class="scomp">Sleep Number · Financial</div><div class="stitle">Going concern bankruptcy warning filed — sales down 16%</div><div class="sinterp">Sleep Number's financial distress creates immediate market opportunity. Activate competitive trade-in offers and targeted digital campaigns now.</div></div><div class="stime">Mar 18</div></div>
-          <div class="signal"><div class="sicon news"><svg viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 6h7M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div><div><div class="scomp">Mattress Firm · Legal</div><div class="stitle">Class action lawsuits filed — fake limited-time sales practices alleged</div><div class="sinterp">The lawsuits create a credibility opening — Mattress Warehouse's transparent pricing is a competitive differentiator worth amplifying now.</div></div><div class="stime">Mar 18</div></div>
-          <div class="signal"><div class="sicon web"><svg viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 5.5h13" stroke="currentColor" stroke-width="1.3"/></svg></div><div><div class="scomp">Sleep Number · Website</div><div class="stitle">Five new mattresses launched during going concern warnings</div><div class="sinterp">New product launches during bankruptcy proceedings signals misaligned priorities. Competitive messaging opportunity around stability and trust.</div></div><div class="stime">Mar 18</div></div>
-          <div class="signal"><div class="sicon social"><svg viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="4" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="2.5" cy="10.5" r="2" stroke="currentColor" stroke-width="1.3"/><circle cx="12.5" cy="10.5" r="2" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 10c.5-2 1.5-3 3-3s2.5 1 3 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></div><div><div class="scomp">Sleep Number · Partnerships</div><div class="stitle">Travis Kelce signed as strategic partner during bankruptcy proceedings</div><div class="sinterp">Celebrity spend while issuing going concern warnings is a credibility risk. The contradiction between marketing investment and financial distress is the kind of story consumer media amplifies.</div></div><div class="stime">Mar 18</div></div>
-          <div class="signal"><div class="sicon organic"><svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1v13M1 7.5h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.3"/></svg></div><div><div class="scomp">Mattress Firm · Technology</div><div class="stitle">AI-powered store associate tools rolled out nationally</div><div class="sinterp">Operational technology investment reduces headcount costs under legal pressure. Their in-store experience becomes more automated — a differentiation opportunity for Mattress Warehouse's human-first service model.</div></div><div class="stime">Mar 18</div></div>
-          <div class="signal"><div class="sicon web"><svg viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 5.5h13" stroke="currentColor" stroke-width="1.3"/></svg></div><div><div class="scomp">Purple · Product</div><div class="stitle">New bed frame collections launched — complete sleep ecosystem play</div><div class="sinterp">Purple's DTC stickiness grows with each product category they add. Ensure new frame products are in store before they drive customers direct.</div></div><div class="stime">Mar 18</div></div>
-          <div class="signal"><div class="sicon organic"><svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1v13M1 7.5h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.3"/></svg></div><div><div class="scomp">Mattress Firm · Search</div><div class="stitle">"mattress stores" moves to #2 — 33,100 monthly searches</div><div class="sinterp">High-volume category keyword with direct overlap. Local SEO for "mattress stores near me" variants is the most defensible angle against Mattress Firm's national scale.</div></div><div class="stime">Mar 18</div></div>
-        </div>
+        <table class="data-table">
+          <thead><tr><th>Collector</th><th>Source</th><th>Cadence</th><th>What it captures</th></tr></thead>
+          <tbody>
+            <tr><td>Instagram, TikTok, Facebook, YouTube</td><td class="col-source">Apify actors</td><td class="col-note">Weekly</td><td class="col-source">Post counts, engagement, content themes, creative</td></tr>
+            <tr><td>Meta Ads Library</td><td class="col-source">Apify — curious_coder actor</td><td class="col-note">Weekly</td><td class="col-source">Active ad count, creative messaging, formats, run duration</td></tr>
+            <tr><td>Competitor Email CRM</td><td class="col-source">Resend inbound — persona aliases</td><td class="col-note">Continuous</td><td class="col-source">Subject lines, offer language, send cadence</td></tr>
+            <tr><td>Web Changes</td><td class="col-source">Playwright page diffing</td><td class="col-note">Weekly</td><td class="col-source">Competitor site copy, pricing, page structure changes</td></tr>
+            <tr><td>Keyword Positions</td><td class="col-source">Semrush API</td><td class="col-note">Weekly</td><td class="col-source">Organic rank for 10 tracked non-brand terms</td></tr>
+            <tr><td>Paid Keyword Trends</td><td class="col-source">Semrush domain_overview</td><td class="col-note">Weekly</td><td class="col-source">Estimated paid keyword count — directional, not exact</td></tr>
+            <tr><td>News &amp; PR</td><td class="col-source">Google News RSS</td><td class="col-note">Weekly</td><td class="col-source">Brand-qualified article mentions, filtered by source quality</td></tr>
+          </tbody>
+        </table>
       </div>
-    </div>
+    </section>
   </div>
 
 </main>
 </div>
 
 <script>
-const SCOUT_API = 'https://mxcfinwrgvxrwoyzjhhs.supabase.co/functions/v1/get-briefing';
-const CLIENT_SLUG = 'mattress-warehouse';
-let pressureChartInstance = null;
-const chartsInitialized = {};
-
-function showPage(id,el){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  el.classList.add('active');
-  if (!chartsInitialized[id]) {
-    chartsInitialized[id] = true;
-    setTimeout(()=>initCharts(id), 60);
-  }
+// ── TAB NAVIGATION ───────────────────────────────────────────────────────────
+function showTab(id, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.getElementById('tab-' + id).classList.add('active')
+  if (el) el.classList.add('active')
 }
 
-function renderOverview(data) {
-  if (data.pressureScore) document.getElementById('hero-score').textContent = data.pressureScore;
-  const delta = data.weekOverWeek?.pressure_score_delta;
-  if (delta !== undefined) { const s = delta >= 0 ? '↑ +' : '↓ '; document.getElementById('hero-delta').textContent = s + delta + ' from last week'; }
-  if (data.executiveSummary) document.getElementById('hero-desc').textContent = data.executiveSummary;
-  const pc = data.pressureComponents || {};
-  if (pc.organic_search) document.getElementById('score-organic').textContent = pc.organic_search;
-  if (pc.paid_search) document.getElementById('score-paid').textContent = pc.paid_search;
-  if (pc.content_velocity) document.getElementById('score-content').textContent = pc.content_velocity;
-  if (pc.social_buzz) document.getElementById('score-social').textContent = pc.social_buzz;
-  if (data.meta?.clientName) { document.getElementById('sidebar-client-name').textContent = data.meta.clientName; document.getElementById('topbar-title').textContent = data.meta.clientName + ' — Competitive Intelligence'; }
-  if (data.meta?.weekOf) { const d = new Date(data.meta.weekOf); const f = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); document.getElementById('topbar-date').textContent = f; document.getElementById('sidebar-week').textContent = 'Week of '+f; }
-  if (data.topDevelopments?.length > 0) {
-    const tm = {alert:'🔴 Alert',watch:'🟡 Watch',opportunity:'🟢 Opportunity'};
-    document.getElementById('developments-grid').innerHTML = data.topDevelopments.slice(0,3).map(d=>`<div class="hl ${d.type==='opportunity'?'opp':d.type}"><div class="hl-type">${tm[d.type]||d.type}</div><div class="hl-title">${d.headline}</div><div class="hl-body">${d.detail}</div><div class="hl-action">${d.recommended_action}</div></div>`).join('');
-  }
-  if (data.pressureHistory?.length > 0 && pressureChartInstance) {
-    pressureChartInstance.data.labels = data.pressureHistory.map(h=>h.date);
-    const scores = data.pressureHistory.map(h=>h.score);
-    pressureChartInstance.data.datasets[0].data = scores;
-    pressureChartInstance.data.datasets[0].pointBackgroundColor = scores.map((_,i)=>i===scores.length-1?'#E1885E':'#8fb0b5');
-    pressureChartInstance.data.datasets[0].pointRadius = scores.map((_,i)=>i===scores.length-1?6:2);
-    pressureChartInstance.update();
-  }
-}
+// ── API FETCH ────────────────────────────────────────────────────────────────
+const API = 'https://mxcfinwrgvxrwoyzjhhs.supabase.co/functions/v1/get-briefing?client=mattress-warehouse'
 
-function renderOrganic(data) {
-  const comparison = data.keywordComparison;
-  if (!comparison?.length) return;
-  const competitors = Object.keys(comparison[0].competitor_positions || {});
-  document.getElementById('keyword-tbody').innerHTML = comparison.map(row => {
-    const mwPos = row.client_position;
-    const mwBadge = mwPos ? `<span class="badge ${mwPos <= 3 ? 'good' : 'mid'}">#${mwPos}</span>` : `<span style="color:var(--dove);font-family:var(--fh);font-size:11px">—</span>`;
-    const compCells = competitors.map(c => {
-      const pos = row.competitor_positions[c];
-      return `<td>${pos ? `<span class="badge ${pos <= 3 ? 'good' : 'mid'}">#${pos}</span>` : `<span style="color:var(--dove);font-family:var(--fh);font-size:11px">—</span>`}</td>`;
-    }).join('');
-    const vol = row.volume ? Number(row.volume).toLocaleString() : '—';
-    return `<tr><td><span class="kw">${row.keyword}</span></td><td>${vol}</td><td>${mwBadge}</td>${compCells}</tr>`;
-  }).join('');
-}
-function renderPaid(data) {
-  if (!data?.paidTrend) return;
-  const colors = {
-    'Mattress Firm': '#8CBEC6',
-    'Sleep Number': '#E1885E',
-    'Purple': '#DCBE4C',
-    'Casper': '#C6EB4C',
-  };
-  const competitors = Object.keys(data.paidTrend);
-  const datasets = competitors.map(name => {
-    const points = [...(data.paidTrend[name] || [])].reverse();
-    return {
-      label: name,
-      data: points.map(p => p.adwords_keywords),
-      borderColor: colors[name] || '#8fb0b5',
-      backgroundColor: 'transparent',
-      tension: 0.4,
-      pointRadius: 3,
-      borderWidth: 2,
-    };
-  });
-  const labels = [...(data.paidTrend[competitors[0]] || [])].reverse().map(p =>
-    new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  );
-  const el = document.getElementById('paidChart');
-  if (!el) return;
-  new Chart(el, {
-    type: 'line',
-    data: { labels, datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { labels: { boxWidth: 10, font: { size: 10 } } } },
-      scales: {
-        x: { grid: { color: 'rgba(246,237,230,0.05)' }, ticks: { maxTicksLimit: 8 } },
-        y: { grid: { color: 'rgba(246,237,230,0.05)' }, ticks: { callback: v => v.toLocaleString() } }
-      }
-    }
-  });
-}
-
-function renderContentWeb(data) {
-  // Only render Claude-synthesized content signals — web changes go to All Signals tab only
-  if (!data.contentSignals?.length) return;
-  const c = document.getElementById('content-signals-container');
-  if (!c) return;
-  const html = data.contentSignals.map(s =>
-    `<div class="csig"><div class="csig-comp">${s.competitor}</div><div class="csig-title">${s.signal}</div><div class="csig-impl">${s.implication}</div></div>`
-  ).join('');
-  if (html) c.innerHTML = html;
-}
-
-function renderAllSignals(data) {
-  const feed = document.getElementById('all-signals-feed');
-  if (!feed) return;
-  const items = [];
-
-  const svgs = {
-    alert: '<svg viewBox="0 0 15 15" fill="none"><path d="M7.5 1L14 13H1L7.5 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M7.5 6v3.5M7.5 11v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
-    news:  '<svg viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4 6h7M4 9h5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
-    web:   '<svg viewBox="0 0 15 15" fill="none"><rect x="1" y="2" width="13" height="11" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M1 5.5h13" stroke="currentColor" stroke-width="1.3"/></svg>',
-    watch: '<svg viewBox="0 0 15 15" fill="none"><circle cx="7.5" cy="7.5" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 4v4l2.5 2.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>',
-  };
-
-  function sigRow(iconClass, svg, comp, title, interp, time) {
-    return `<div class="signal"><div class="sicon ${iconClass}">${svg}</div><div><div class="scomp">${comp}</div><div class="stitle">${title}</div><div class="sinterp">${interp}</div></div><div class="stime">${time}</div></div>`;
-  }
-
-  // Top developments from briefing
-  (data.topDevelopments || []).forEach(d => {
-    const ic = d.type === 'alert' ? 'alert-icon' : d.type === 'opportunity' ? 'news' : 'social';
-    const sv = d.type === 'alert' ? svgs.alert : svgs.news;
-    const label = d.type === 'alert' ? '🔴 Alert' : d.type === 'opportunity' ? '🟢 Opportunity' : '🟡 Watch';
-    items.push(sigRow(ic, sv, `${d.competitor || ''} · ${label}`, d.headline || '', d.detail || '', d.urgency || 'this week'));
-  });
-
-  // News mentions — title/summary already clean from Edge Function
-  (data.newsMentions || []).slice(0, 5).forEach(n => {
-    const pub = n.published ? new Date(n.published).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
-    const src = n.source ? ' · ' + n.source : '';
-    const title = (n.title || '').slice(0, 110);
-    const summary = (n.summary || '').slice(0, 160);
-    items.push(sigRow('news', svgs.news, `${n.competitor}${src}`, title, summary, pub));
-  });
-
-  // Web changes — structured data from Edge Function
-  (data.webChanges || []).slice(0, 5).forEach(w => {
-    const page = (w.url || '').replace('https://', '').replace('http://', '');
-    const detail = (w.changes || []).map(c => {
-      const added = (c.added || []).slice(0, 2).join(', ');
-      const removed = (c.removed || []).slice(0, 2).join(', ');
-      let d = c.field || '';
-      if (added) d += ': added "' + added + '"';
-      if (removed) d += (added ? ' · ' : ': ') + 'removed "' + removed + '"';
-      return d;
-    }).filter(Boolean).join(' · ') || 'Page content updated';
-    const date = w.collected_at ? new Date(w.collected_at).toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '';
-    items.push(sigRow('web', svgs.web, `${w.competitor} · Web Change · Score ${w.significance_score || 0}`, page, detail, date));
-  });
-
-  if (items.length > 0) feed.innerHTML = items.join('');
-}
-
-function renderSocial(data) {
-  const yt = data.youtubeSocial || [];
-  const ig = data.instagramSocial || [];
-  if (!yt.length && !ig.length) return;
-
-  // Update the social score in overview breakdown
-  const socialScore = document.getElementById('score-social');
-  if (socialScore && data.pressureComponents?.social_buzz) {
-    socialScore.textContent = data.pressureComponents.social_buzz;
-  }
-
-  // Inject social signals into All Signals feed (append after existing items)
-  const feed = document.getElementById('all-signals-feed');
-  if (!feed) return;
-
-  const ytSvg = '<svg viewBox="0 0 15 15" fill="none"><rect x="1" y="3" width="13" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 5.5l4 2-4 2v-4z" fill="currentColor"/></svg>';
-  const igSvg = '<svg viewBox="0 0 15 15" fill="none"><rect x="1.5" y="1.5" width="12" height="12" rx="3" stroke="currentColor" stroke-width="1.3"/><circle cx="7.5" cy="7.5" r="2.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="4" r="0.75" fill="currentColor"/></svg>';
-
-  const items = [];
-
-  yt.forEach(c => {
-    const subs = c.subscriber_count ? c.subscriber_count.toLocaleString() : '—';
-    const uploads = c.uploads_14d || 0;
-    const views = c.views_14d ? c.views_14d.toLocaleString() : '0';
-    const topVideo = c.top_video_title ? `Top video: "${c.top_video_title}" (${(c.top_video_views||0).toLocaleString()} views)` : 'No uploads in past 14 days';
-    items.push(`<div class="signal"><div class="sicon organic">${ytSvg}</div><div><div class="scomp">${c.competitor} · YouTube</div><div class="stitle">${subs} subscribers · ${uploads} uploads in 14 days · ${views} total views</div><div class="sinterp">${topVideo}</div></div><div class="stime">This week</div></div>`);
-  });
-
-  ig.forEach(c => {
-    if (!c.follower_count) return; // skip if no data
-    const followers = c.follower_count.toLocaleString();
-    const posts = c.posts_last_30d || 0;
-    const er = c.engagement_rate ? c.engagement_rate.toFixed(2) + '%' : '—';
-    items.push(`<div class="signal"><div class="sicon social">${igSvg}</div><div><div class="scomp">${c.competitor} · Instagram · @${c.handle}</div><div class="stitle">${followers} followers · ${posts} posts in 30 days</div><div class="sinterp">Engagement rate: ${er} · Avg likes: ${(c.avg_likes||0).toLocaleString()}</div></div><div class="stime">This week</div></div>`);
-  });
-
-  if (items.length) {
-    feed.innerHTML += items.join('');
-  }
-}
-
-async function loadScoutData() {
+async function loadData() {
   try {
-    const res = await fetch(`${SCOUT_API}?client=${CLIENT_SLUG}`);
-    if (!res.ok) throw new Error('API '+res.status);
-    const data = await res.json();
-    renderOverview(data);
-    renderOrganic(data);
-    renderContentWeb(data);
-    renderAllSignals(data);
-    renderSocial(data);
-    window._scoutData = data;
-    console.log('[Scout] Live data loaded — pressure:', data.pressureScore, '| signals:', data.signalCounts);
+    const res = await fetch(API)
+    const d = await res.json()
+    renderAll(d)
   } catch(e) {
-    console.warn('[Scout] Static fallback:', e.message);
+    console.error('Scout API error:', e)
   }
 }
 
-Chart.defaults.color='#8fb0b5';
-Chart.defaults.borderColor='rgba(246,237,230,0.07)';
-Chart.defaults.font.family="'Open Sans',sans-serif";
-Chart.defaults.font.size=11;
+function renderAll(d) {
+  // Topbar / sidebar meta
+  const meta = d.meta || {}
+  const weekStr = meta.weekOf
+    ? new Date(meta.weekOf).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : '—'
+  document.querySelectorAll('.js-week-of').forEach(el => el.textContent = weekStr)
+  document.getElementById('topbar-date').textContent = weekStr
+  document.getElementById('sidebar-week').textContent = 'Week of ' + (meta.weekOf ? new Date(meta.weekOf).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—')
+  document.getElementById('sidebar-client-name').textContent = meta.clientName || 'Mattress Warehouse'
 
-const weeks=['Jan 20','Jan 27','Feb 3','Feb 10','Feb 17','Feb 24','Mar 9','Mar 18'];
-
-function initCharts(pageId) {
-  const mk = (id,cfg) => { const el=document.getElementById(id); if(el) new Chart(el,cfg); };
-  if (pageId==='overview') {
-    pressureChartInstance = new Chart(document.getElementById('pressureChart'),{type:'line',data:{labels:weeks,datasets:[{label:'Pressure',data:[48,51,55,58,60,63,63,78],borderColor:'#E1885E',backgroundColor:'rgba(225,136,94,0.07)',fill:true,tension:0.4,pointBackgroundColor:['#8fb0b5','#8fb0b5','#8fb0b5','#8fb0b5','#8fb0b5','#8fb0b5','#8fb0b5','#E1885E'],pointRadius:[2,2,2,2,2,2,2,6],borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(246,237,230,0.05)'}},y:{grid:{color:'rgba(246,237,230,0.05)'},min:0,max:100}}}});
-    loadScoutData();
-  }
-  if (pageId==='paid') {
-    renderPaid(window._scoutData);
-  }
-  if (pageId==='trends') {
-    const td=Array.from({length:13},(_,i)=>{const d=new Date('2025-12-22');d.setDate(d.getDate()+i*7);return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});});
-    mk('trendsChart',{type:'line',data:{labels:td,datasets:[{label:'Mattress Firm',data:[72,74,70,75,73,76,74,78,76,80,78,82,85],borderColor:'#8CBEC6',fill:false,tension:0.4,pointRadius:2,borderWidth:2.5},{label:'Sleep Number',data:[55,56,54,58,55,57,53,56,52,55,50,48,42],borderColor:'#E1885E',fill:false,tension:0.4,pointRadius:2,borderWidth:2,borderDash:[5,3]},{label:'Purple',data:[38,40,42,41,43,44,43,45,44,46,45,47,48],borderColor:'#DCBE4C',fill:false,tension:0.4,pointRadius:2,borderWidth:2},{label:'Casper',data:[22,24,21,23,22,25,23,24,22,25,23,24,22],borderColor:'#C6EB4C',fill:false,tension:0.4,pointRadius:2,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(246,237,230,0.05)'},ticks:{maxTicksLimit:8}},y:{grid:{color:'rgba(246,237,230,0.05)'},min:0,max:100}}}});
-    mk('categoryTrendsChart',{type:'line',data:{labels:td,datasets:[{label:'mattress sale',data:[65,68,62,70,72,74,70,76,78,80,76,82,85],borderColor:'#8CBEC6',tension:0.4,pointRadius:2,borderWidth:2,fill:false},{label:'best mattress',data:[55,57,53,58,60,62,58,64,66,68,64,70,72],borderColor:'#C6EB4C',tension:0.4,pointRadius:2,borderWidth:2,fill:false},{label:'memory foam',data:[48,50,47,52,54,55,52,56,58,60,56,62,64],borderColor:'#E1885E',tension:0.4,pointRadius:2,borderWidth:2,fill:false,borderDash:[5,3]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10,font:{size:10}}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:6}},y:{grid:{color:'rgba(246,237,230,0.05)'},min:0,max:100}}}});
-    mk('geoChart',{type:'bar',data:{labels:['Maryland','Virginia','Pennsylvania','Ohio','N. Carolina','Georgia','Tennessee','Florida','New York','Illinois'],datasets:[{data:[100,92,85,78,74,68,65,60,55,52],backgroundColor:'rgba(60,110,113,0.75)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(246,237,230,0.05)'},min:0,max:100},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
-  }
+  renderOverview(d)
+  renderSearchIntelligence(d)
+  renderPaidMonitoring(d)
+  renderSocialPresence(d)
+  renderOwnedChannels(d)
+  renderDataHealth(d)
 }
 
-// Init overview on load (default active tab)
-chartsInitialized['overview'] = true;
-initCharts('overview');
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function scoreLabel(s) {
+  if (s == null) return ''
+  if (s <= 25) return 'Calm'
+  if (s <= 50) return 'Active'
+  if (s <= 75) return 'Elevated'
+  if (s <= 90) return 'High'
+  return 'Critical'
+}
+function scoreClass(s) {
+  if (s == null) return ''
+  if (s <= 25) return 'status--calm'
+  if (s <= 50) return 'status--active'
+  if (s <= 75) return 'status--elevated'
+  if (s <= 90) return 'status--high'
+  return 'status--critical'
+}
+const fmt = (n, d=0) => n != null ? Number(n).toLocaleString('en-US',{maximumFractionDigits:d}) : '—'
+
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
+function renderOverview(d) {
+  const s = d.pressureScore
+  const scoreEl = document.querySelector('.js-pressure-score')
+  if (scoreEl) { scoreEl.textContent = s ?? '—'; scoreEl.className = `hero-score__number js-pressure-score ${scoreClass(s)}` }
+  const statusEl = document.querySelector('.js-pressure-status')
+  if (statusEl) { statusEl.textContent = scoreLabel(s); statusEl.className = `hero-score__status js-pressure-status ${scoreClass(s)}` }
+  const summaryEl = document.querySelector('.js-executive-summary')
+  if (summaryEl) summaryEl.textContent = d.executiveSummary || ''
+  if (d.pressureComponents) {
+    document.querySelectorAll('.component-row').forEach(row => {
+      const val = d.pressureComponents[row.dataset.component]
+      row.querySelector('.component-row__score').textContent = val ?? '—'
+      const fill = row.querySelector('.component-row__fill')
+      if (fill) fill.style.width = val != null ? val + '%' : '0%'
+    })
+  }
+  renderTopDevelopments(d.topDevelopments || [])
+  const narEl = document.querySelector('.js-strategic-narrative')
+  if (narEl) narEl.textContent = d.strategicNarrative || ''
+  renderPressureTrend(d.pressureHistory || [])
+}
+
+function renderTopDevelopments(devs) {
+  const c = document.getElementById('top-developments-container')
+  if (!c) return
+  if (!devs.length) { c.innerHTML = `<div class="empty-state">No top developments this week.</div>`; return }
+  const order = {immediate:0,this_week:1,watch:2,this_month:3}
+  const sorted = [...devs].sort((a,b) => (order[a.urgency]??9)-(order[b.urgency]??9))
+  c.innerHTML = sorted.map(dev => {
+    const cls = dev.type === 'opportunity' ? 'development-card--opportunity' : dev.type === 'alert' ? 'development-card--alert' : 'development-card--watch'
+    const urgLabel = dev.urgency === 'immediate' ? 'Immediate' : dev.urgency === 'this_week' ? 'This Week' : dev.urgency === 'this_month' ? 'This Month' : 'Watch'
+    const badgeCls = dev.type === 'opportunity' ? 'badge-opportunity' : dev.type === 'alert' ? 'badge-alert' : 'badge-watch'
+    return `<div class="development-card ${cls}">
+      <div class="development-card__header"><div class="development-card__header-left">
+        <span class="badge ${badgeCls}">${urgLabel}</span>
+        ${dev.competitor ? `<span class="competitor-tag">${dev.competitor}</span>` : ''}
+      </div></div>
+      <h3 class="development-card__headline">${dev.headline||''}</h3>
+      <p class="development-card__detail">${dev.detail||''}</p>
+      ${dev.recommended_action ? `<div class="development-card__action">
+        ${dev.advisor_role ? `<span class="development-card__role">${dev.advisor_role} recommends:</span>` : ''}
+        <span class="development-card__action-text">${dev.recommended_action}</span>
+      </div>` : ''}
+    </div>`
+  }).join('')
+}
+
+function renderPressureTrend(history) {
+  const canvas = document.getElementById('pressure-trend-chart')
+  if (!canvas || !history.length) return
+  const recent = history.slice(-8)
+  const labels = recent.map(h => new Date(h.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}))
+  const scores = recent.map(h => h.score)
+  const ptColors = scores.map(s => s<=25?'#8fb0b5':s<=50?'#6dbf8f':s<=75?'#dcbe4c':s<=90?'#e1885e':'#c94f4f')
+  new Chart(canvas, {
+    type:'line', data:{labels, datasets:[{label:'Pressure Score',data:scores,borderColor:'#8fb0b5',backgroundColor:'rgba(143,176,181,0.08)',pointBackgroundColor:ptColors,pointRadius:5,tension:0.3,fill:true}]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Score: ${c.parsed.y} — ${scoreLabel(c.parsed.y)}`}}},
+      scales:{x:{ticks:{color:'#8fb0b5',font:{size:11}},grid:{color:'rgba(143,176,181,0.08)'}},y:{min:0,max:100,ticks:{color:'#8fb0b5',font:{size:11},stepSize:25},grid:{color:'rgba(143,176,181,0.08)'}}}}
+  })
+}
+
+// ── SEARCH INTELLIGENCE ───────────────────────────────────────────────────────
+function renderSearchIntelligence(d) {
+  renderKeywordTable(d.keywordComparison || [])
+  renderGoogleTrends(d.keywordComparison || [])
+  renderKeywordMovements(d.keywordMovements || [])
+  renderSearchRecs(d.searchRecommendations || [])
+}
+
+function renderKeywordTable(keywords) {
+  const card = document.getElementById('keyword-table-card')
+  if (!card || !keywords.length) { if(card) card.innerHTML=`<div class="empty-state">No keyword data available.</div>`; return }
+  const hasAny = keywords.some(k => k.client_position!=null || Object.values(k.competitor_positions||{}).some(v=>v!=null))
+  const competitors = Object.keys(keywords[0]?.competitor_positions||{})
+  const posCell = p => p==null ? `<span class="pos pos--none">—</span>` : p<=10 ? `<span class="pos pos--high">${p}</span>` : p<=30 ? `<span class="pos pos--mid">${p}</span>` : `<span class="pos pos--low">${p}</span>`
+  card.innerHTML = `
+    ${!hasAny ? `<div class="data-gap-notice">Keyword position data is not yet populating from Semrush. GSC integration will establish MW baseline tracking — see Search Recommendations below.</div>` : ''}
+    <table class="data-table">
+      <thead><tr><th>Keyword</th><th class="col-weight">Volume</th><th>Mattress Warehouse</th>${competitors.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>${keywords.map(k=>`<tr>
+        <td class="keyword-cell">${k.keyword}</td>
+        <td class="col-weight col-note">${k.volume!=null?Number(k.volume).toLocaleString():'—'}</td>
+        <td>${posCell(k.client_position)}</td>
+        ${competitors.map(c=>`<td>${posCell(k.competitor_positions?.[c])}</td>`).join('')}
+      </tr>`).join('')}</tbody>
+    </table>
+    <div class="table-legend"><span class="pos pos--high">1–10</span> Top 10 &nbsp;·&nbsp; <span class="pos pos--mid">11–30</span> Page 2–3 &nbsp;·&nbsp; <span class="pos pos--low">30+</span> Beyond page 3 &nbsp;·&nbsp; <span class="pos pos--none">—</span> Not ranking</div>`
+}
+
+function renderGoogleTrends(keywords) {
+  const c = document.getElementById('trends-container')
+  if (!c) return
+  const terms = keywords.map(k=>k.keyword).slice(0,5)
+  const encodedTerms = terms.map(t=>encodeURIComponent(t)).join(',')
+  const trendsUrl = `https://trends.google.com/trends/explore?date=today%203-m&geo=US&q=${encodedTerms}&hl=en`
+  const embedUrl = `https://trends.google.com/trends/embed/explore/TIMESERIES?req=%7B%22comparisonItem%22%3A%5B${terms.map(t=>`%7B%22keyword%22%3A%22${encodeURIComponent(t)}%22%2C%22geo%22%3A%22US%22%2C%22time%22%3A%22today%203-m%22%7D`).join('%2C')}%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D&tz=-240&hl=en`
+  c.innerHTML = `<div class="trends-wrap">
+    <iframe src="${embedUrl}" frameborder="0" scrolling="0" style="border:none;width:100%;height:360px;opacity:0;transition:opacity 0.3s;" onload="this.style.opacity='1'" onerror="document.getElementById('trends-fallback').style.display='block';this.style.display='none';"></iframe>
+    <div id="trends-fallback" class="trends-fallback" style="display:none">Google Trends could not load inline. <a href="${trendsUrl}" target="_blank" rel="noopener">Open in Google Trends →</a></div>
+  </div>
+  <div class="trends-terms">Comparing: ${terms.map(t=>`<span class="keyword-tag">${t}</span>`).join('')}</div>`
+}
+
+function renderKeywordMovements(movements) {
+  const c = document.getElementById('keyword-movements-container')
+  const s = document.getElementById('keyword-movements-section')
+  if (!c) return
+  if (!movements.length) { if(s) s.style.display='none'; return }
+  if(s) s.style.display='block'
+  c.innerHTML = movements.map(m=>`<div class="signal-card">
+    ${m.keyword?`<div class="signal-card__title">${m.keyword}</div>`:''}
+    ${m.competitor?`<span class="competitor-tag">${m.competitor}</span>`:''}
+    ${m.movement||m.observation?`<div class="signal-card__body">${m.movement||m.observation}</div>`:''}
+  </div>`).join('')
+}
+
+function renderSearchRecs(recs) {
+  const c = document.getElementById('search-recs-container')
+  if (!c) return
+  if (!recs.length) { c.innerHTML=`<div class="empty-state">No search recommendations this week.</div>`; return }
+  c.innerHTML = recs.map(r=>`<div class="signal-card">
+    <div class="signal-card__header">${r.advisor_role?`<span class="signal-card__role">${r.advisor_role}</span>`:''}</div>
+    ${r.recommended_action?`<div class="signal-card__title">${r.recommended_action}</div>`:''}
+    ${r.observation?`<div class="signal-card__observation">${r.observation}</div>`:''}
+    ${r.opportunity?`<div class="signal-card__body">${r.opportunity}</div>`:''}
+  </div>`).join('')
+}
+
+// ── PAID MONITORING ───────────────────────────────────────────────────────────
+function renderPaidMonitoring(d) {
+  renderMetaAds(d.metaAds || [])
+  renderPaidTrend(d.paidTrend || {})
+  renderPaidRecs(d.paidRecommendations || [])
+}
+
+function renderMetaAds(metaAds) {
+  const c = document.getElementById('meta-ads-container')
+  if (!c) return
+  if (!metaAds.length) { c.innerHTML=`<div class="empty-state">No Meta Ads data collected this week.</div>`; return }
+  c.innerHTML = metaAds.map(comp => {
+    const ads = comp.ads || []
+    const hasReal = ads.some(a=>a.body_text&&a.body_text.length>0)
+    return `<div class="card card--meta-competitor">
+      <div class="card-header">
+        <div class="card-header__left">
+          <span class="competitor-tag">${comp.competitor}</span>
+          <span class="card-note">${comp.total_ads_in_library!=null?`${comp.total_ads_in_library} active ads in library`:'Library count unavailable'}</span>
+        </div>
+        <span class="col-note">${comp.ads_sampled||20} sampled</span>
+      </div>
+      ${hasReal ? `<div class="ad-rows">${ads.filter(a=>a.body_text).map(ad=>`<div class="ad-row">
+        <div class="ad-row__body">${ad.body_text.slice(0,120)}${ad.body_text.length>120?'…':''}</div>
+        <div class="ad-row__meta">
+          <span class="ad-format-pill">${ad.display_format||'UNKNOWN'}</span>
+          ${ad.has_video?'<span class="ad-format-pill ad-format-pill--video">VIDEO</span>':''}
+          ${ad.branded_content?'<span class="ad-format-pill ad-format-pill--ugc">UGC</span>':''}
+          ${ad.start_date?`<span class="col-note">${ad.start_date.slice(0,10)}</span>`:''}
+        </div>
+      </div>`).join('')}</div>`
+      : `<div class="empty-state empty-state--inline">Creative data will populate after next collection run.</div>`}
+    </div>`
+  }).join('')
+}
+
+function renderPaidTrend(paidTrend) {
+  const canvas = document.getElementById('paid-trend-chart')
+  const emptyEl = document.getElementById('paid-trend-empty')
+  if (!canvas) return
+  const competitors = Object.keys(paidTrend)
+  if (!competitors.length) { canvas.style.display='none'; if(emptyEl) emptyEl.style.display='block'; return }
+  const allDates = [...new Set(competitors.flatMap(c=>paidTrend[c].map(p=>p.date.slice(0,10))))].sort()
+  const colors = {'Mattress Firm':'#8fb0b5','Sleep Number':'#e1885e','Purple':'#6dbf8f','Casper':'#dcbe4c'}
+  const datasets = competitors.map(comp => {
+    const dm = {}; paidTrend[comp].forEach(p=>{ dm[p.date.slice(0,10)]=p.adwords_keywords })
+    return {label:comp,data:allDates.map(d=>dm[d]??null),borderColor:colors[comp]||'#8fb0b5',backgroundColor:'transparent',tension:0.3,spanGaps:true,pointRadius:3}
+  })
+  const labels = allDates.map(d=>new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'}))
+  new Chart(canvas, {
+    type:'line', data:{labels,datasets},
+    options:{responsive:true,plugins:{legend:{position:'top',labels:{color:'#8fb0b5',font:{size:11}}},tooltip:{mode:'index',intersect:false}},
+      scales:{x:{ticks:{color:'#8fb0b5',font:{size:10}},grid:{color:'rgba(143,176,181,0.08)'}},y:{ticks:{color:'#8fb0b5',font:{size:10}},grid:{color:'rgba(143,176,181,0.08)'},title:{display:true,text:'Est. Paid Keywords',color:'#8fb0b5',font:{size:10}}}}}
+  })
+}
+
+function renderPaidRecs(recs) {
+  const c = document.getElementById('paid-recs-container')
+  if (!c) return
+  if (!recs.length) { c.innerHTML=`<div class="empty-state">No paid media recommendations this week.</div>`; return }
+  c.innerHTML = recs.map(r=>`<div class="signal-card">
+    <div class="signal-card__header">
+      ${r.competitor?`<span class="competitor-tag">${r.competitor}</span>`:''}
+      ${r.advisor_role?`<span class="signal-card__role">${r.advisor_role}</span>`:''}
+    </div>
+    ${r.observation?`<div class="signal-card__observation">${r.observation}</div>`:''}
+    ${r.recommended_action?`<div class="signal-card__title">${r.recommended_action}</div>`:''}
+    ${r.implication?`<div class="signal-card__body">${r.implication}</div>`:''}
+  </div>`).join('')
+}
+
+// ── SOCIAL PRESENCE ───────────────────────────────────────────────────────────
+function renderSocialPresence(d) {
+  renderSocialMetrics(d.instagramApify||[],d.tiktokSocial||[],d.facebookSocial||[],d.youtubeApify||[])
+  renderContentThemes(d.contentThemes||[])
+  renderRecentPosts(d.instagramApify||[],d.tiktokSocial||[],d.facebookSocial||[])
+  renderSocialRecs(d.socialContentRecommendations||[])
+}
+
+function renderSocialMetrics(ig,tt,fb,yt) {
+  const tbody = document.querySelector('#social-metrics-table tbody')
+  if (!tbody) return
+  const igM={},ttM={},fbM={},ytM={}
+  ig.forEach(x=>igM[x.competitor]=x); tt.forEach(x=>ttM[x.competitor]=x)
+  fb.forEach(x=>fbM[x.competitor]=x); yt.forEach(x=>ytM[x.competitor]=x)
+  const comps = [...new Set([...ig,...tt,...fb,...yt].map(x=>x.competitor))].sort()
+  tbody.innerHTML = comps.map(comp => {
+    const i=igM[comp],t=ttM[comp],f=fbM[comp],y=ytM[comp]
+    return `<tr>
+      <td><span class="competitor-tag">${comp}</span></td>
+      <td class="col-platform">${i?`<span class="metric-primary">${fmt(i.posts_last_30d)} posts</span><span class="metric-secondary">${fmt(i.follower_count)} followers · ${fmt(i.avg_likes)} avg likes</span>`:'<span class="col-note">—</span>'}</td>
+      <td class="col-platform">${t?`<span class="metric-primary">${fmt(t.posts_last_30d)} posts</span><span class="metric-secondary">${fmt(t.avg_views)} avg views</span>`:'<span class="col-note">—</span>'}</td>
+      <td class="col-platform">${f?`<span class="metric-primary">${fmt(f.posts_last_30d)} posts</span><span class="metric-secondary">${fmt(f.avg_likes)} avg likes</span>`:'<span class="col-note">—</span>'}</td>
+      <td class="col-platform">${y?`<span class="metric-primary">${fmt(y.uploads_14d)} uploads</span>${y.top_video_title?`<span class="metric-secondary">${y.top_video_title.slice(0,50)}…</span>`:''}`:'<span class="col-note">—</span>'}</td>
+    </tr>`
+  }).join('')
+}
+
+function renderContentThemes(themes) {
+  const c = document.getElementById('content-themes-container')
+  if (!c) return
+  if (!themes.length) { c.innerHTML=`<div class="empty-state">No content themes synthesized this week.</div>`; return }
+  c.innerHTML = `<div class="card-grid card-grid--3">${themes.map(t=>`<div class="card card--theme">
+    <div class="card__title">${t.theme||t.title||t}</div>
+    ${t.competitors?`<div class="card__body">${Array.isArray(t.competitors)?t.competitors.join(', '):t.competitors}</div>`:''}
+    ${t.description?`<div class="card__body">${t.description}</div>`:''}
+  </div>`).join('')}</div>`
+}
+
+function renderRecentPosts(ig,tt,fb) {
+  const c = document.getElementById('recent-posts-container')
+  if (!c) return
+  const igM={},ttM={},fbM={}
+  ig.forEach(x=>igM[x.competitor]=x); tt.forEach(x=>ttM[x.competitor]=x); fb.forEach(x=>fbM[x.competitor]=x)
+  const comps = [...new Set([...ig,...tt,...fb].map(x=>x.competitor))].sort()
+  c.innerHTML = comps.map(comp => {
+    const sources = [
+      {label:'Instagram',data:igM[comp],posts:igM[comp]?.posts_last_30d||0,texts:igM[comp]?.recent_captions},
+      {label:'TikTok',data:ttM[comp],posts:ttM[comp]?.posts_last_30d||0,texts:ttM[comp]?.recent_descriptions},
+      {label:'Facebook',data:fbM[comp],posts:fbM[comp]?.posts_last_30d||0,texts:fbM[comp]?.recent_texts},
+    ].filter(s=>s.data)
+    if (!sources.length) return ''
+    sources.sort((a,b)=>b.posts-a.posts)
+    const top=sources[0], sample=(top.texts||[]).slice(0,3)
+    return `<div class="card card--posts">
+      <div class="card-header"><span class="competitor-tag">${comp}</span><span class="platform-tag">${top.label}</span></div>
+      <ul class="post-samples">${sample.map(t=>`<li class="post-sample">${t.slice(0,140)}${t.length>140?'…':''}</li>`).join('')}</ul>
+    </div>`
+  }).join('')
+}
+
+function renderSocialRecs(recs) {
+  const c = document.getElementById('social-recs-container')
+  if (!c) return
+  if (!recs.length) { c.innerHTML=`<div class="empty-state">No social content recommendations this week.</div>`; return }
+  c.innerHTML = recs.map(r=>`<div class="signal-card">
+    ${r.role?`<div class="signal-card__role">${r.role}</div>`:''}
+    <div class="signal-card__title">${r.recommendation||r.title||r}</div>
+    ${r.rationale?`<div class="signal-card__body">${r.rationale}</div>`:''}
+  </div>`).join('')
+}
+
+// ── OWNED CHANNELS ────────────────────────────────────────────────────────────
+function renderOwnedChannels(d) {
+  renderWebChanges(d.webChanges||[])
+  renderEmailIntelligence(d.emailSummary||[],d.ownedChannelObservations||[])
+  renderCampaignSignals(d.brandCampaignSignals||[])
+}
+
+function renderWebChanges(changes) {
+  const c = document.getElementById('web-changes-container')
+  if (!c) return
+  if (!changes.length) { c.innerHTML=`<div class="empty-state">No significant web changes detected this week.</div>`; return }
+  const sorted = [...changes].sort((a,b)=>(b.significance_score||0)-(a.significance_score||0))
+  c.innerHTML = sorted.map(ch => {
+    const top = ch.changes?.[0]
+    const added = top?.added?.slice(0,3)||[]
+    const removed = top?.removed?.slice(0,3)||[]
+    const date = ch.collected_at ? new Date(ch.collected_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''
+    return `<div class="card card--web-change">
+      <div class="card-header">
+        <div class="card-header__left"><span class="competitor-tag">${ch.competitor}</span><span class="card__url">${ch.url}</span></div>
+        <div class="card-header__right"><span class="score-pill">${ch.significance_score}</span><span class="col-note">${date}</span></div>
+      </div>
+      ${top?`<div class="web-change__field">${top.field}</div>
+      <div class="web-change__diff">
+        ${added.length?`<div class="web-change__added">${added.map(t=>`<span>${t}</span>`).join('')}</div>`:''}
+        ${removed.length?`<div class="web-change__removed">${removed.map(t=>`<span>${t}</span>`).join('')}</div>`:''}
+      </div>`:''}
+    </div>`
+  }).join('')
+}
+
+function renderEmailIntelligence(emailSummary, observations) {
+  const c = document.getElementById('email-intelligence-container')
+  if (!c) return
+  if (!emailSummary.length) { c.innerHTML=`<div class="empty-state">No competitor emails received this week. Lists were subscribed May 22 — volume will build over coming weeks.</div>`; return }
+  const obsMap={}; observations.forEach(o=>{ if(o.signal_type==='email') obsMap[o.competitor]=o })
+  c.innerHTML = emailSummary.map(entry => {
+    const obs = obsMap[entry.competitor]
+    return `<div class="card card--email">
+      <div class="card-header">
+        <div class="card-header__left"><span class="competitor-tag">${entry.competitor}</span><span class="email-count">${entry.emails_this_week} email${entry.emails_this_week!==1?'s':''} this week</span></div>
+      </div>
+      <ul class="email-subjects">${entry.subjects.map(s=>`<li class="email-subject"><span class="email-subject__line">${s}</span></li>`).join('')}</ul>
+      ${obs?`<div class="email-observation">
+        <div class="email-observation__text">${obs.observation}</div>
+        ${obs.implication?`<div class="email-observation__implication">${obs.implication}</div>`:''}
+      </div>`:''}
+      <div class="email-pull-note">To read the full email, ask Jackson to pull it by subject line above.</div>
+    </div>`
+  }).join('')
+}
+
+function renderCampaignSignals(signals) {
+  const c = document.getElementById('campaign-signals-container')
+  if (!c) return
+  if (!signals.length) { c.innerHTML=`<div class="empty-state">No coordinated campaign signals detected this week. Scout looks for 2+ channels co-firing around a shared theme.</div>`; return }
+  c.innerHTML = signals.map(sig => {
+    const cls = sig.confidence==='high'?'badge-high':sig.confidence==='medium'?'badge-med':'badge-low'
+    const detected = sig.first_detected ? new Date(sig.first_detected).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''
+    return `<div class="card card--campaign">
+      <div class="card-header">
+        <div class="card-header__left"><span class="competitor-tag">${sig.competitor}</span><span class="card__title">${sig.campaign_theme}</span></div>
+        <div class="card-header__right"><span class="badge ${cls}">${sig.confidence} confidence</span>${detected?`<span class="col-note">First detected ${detected}</span>`:''}</div>
+      </div>
+      ${sig.evidence?.length?`<ul class="campaign-evidence">${sig.evidence.map(e=>`<li class="campaign-evidence__item">${e}</li>`).join('')}</ul>`:''}
+    </div>`
+  }).join('')
+}
+
+// ── DATA HEALTH ───────────────────────────────────────────────────────────────
+function renderDataHealth(d) {
+  const dh = d.dataHealth||{}, sc = d.signalCounts||{}
+  const genEl = document.querySelector('.js-generated-at')
+  if (genEl && dh.generatedAt) {
+    const dt = new Date(dh.generatedAt)
+    genEl.textContent = dt.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) + ' at ' + dt.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})
+  }
+  renderCollectionStatus(dh.collectionStatus||[])
+  renderSignalCounts(sc)
+  renderQualityFlags(dh.dataQualityFlags||[])
+  renderAdvisorsActivated(dh.advisorsActivated||[])
+}
+
+function renderCollectionStatus(sources) {
+  const tbody = document.querySelector('#collection-status-table tbody')
+  if (!tbody) return
+  const labels = {semrush:'Semrush — Keyword & Paid',google_news:'Google News — PR & Mentions',web_change:'Web Change Detector',apify:'Apify — Social & Meta Ads',reddit:'Reddit',competitor_emails:'Competitor Email CRM'}
+  tbody.innerHTML = sources.map(s => {
+    const lastRun = s.last_run ? new Date(s.last_run).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '—'
+    return `<tr><td>${labels[s.source]||s.source}</td><td><span class="status-pill status-pill--${s.status}">${s.status}</span></td><td class="col-weight">${s.signals_this_week}</td><td class="col-note">${lastRun}</td></tr>`
+  }).join('')
+}
+
+function renderSignalCounts(sc) {
+  const g = document.getElementById('signal-counts-grid')
+  if (!g) return
+  const items = [{label:'Total Signals',value:sc.total},{label:'News Mentions',value:sc.news},{label:'Web Changes',value:sc.webChanges},{label:'Competitor Emails',value:sc.emails},{label:'Instagram',value:sc.instagram},{label:'TikTok',value:sc.tiktok},{label:'Facebook',value:sc.facebook},{label:'YouTube',value:sc.youtube},{label:'Meta Ads',value:sc.metaAds}]
+  g.innerHTML = items.map(i=>`<div class="card card--stat"><div class="card__stat-value">${i.value??'—'}</div><div class="card__stat-label">${i.label}</div></div>`).join('')
+}
+
+function renderQualityFlags(flags) {
+  const c = document.getElementById('quality-flags-container')
+  if (!c) return
+  c.innerHTML = flags.length ? flags.map(f=>`<div class="flag-item"><span class="flag-item__icon">⚠</span><span class="flag-item__text">${f}</span></div>`).join('') : `<div class="empty-state">No data quality flags this week — all signals within expected thresholds.</div>`
+}
+
+function renderAdvisorsActivated(advisors) {
+  const g = document.getElementById('advisors-activated-grid')
+  if (!g) return
+  g.innerHTML = advisors.map(role=>`<div class="card card--advisor"><div class="card__title">${role}</div><div class="card__body">Activated this week</div></div>`).join('')
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+loadData()
 </script>
 </body>
 </html>
