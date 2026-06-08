@@ -682,12 +682,6 @@ def synthesize_for_client(client_slug: str):
     week_of = date.today().isoformat()
     week_cutoff = (datetime.utcnow() - timedelta(days=7)).isoformat()
 
-    # Skip if briefing already exists this week
-    existing = supabase.table("briefings").select("id").eq("client_id", client_id).eq("week_of", week_of).execute()
-    if existing.data:
-        print(f"[synthesizer] Briefing already exists for {client_slug} week of {week_of}, skipping")
-        return
-
     # Fetch signals and emails
     signals = fetch_week_signals(client_id)
     emails = fetch_recent_competitor_emails(client_id)
@@ -796,7 +790,7 @@ def synthesize_for_client(client_slug: str):
     }
 
     # Save briefing
-    supabase.table("briefings").insert({
+    supabase.table("briefings").upsert({
         "client_id": client_id,
         "week_of": week_of,
         "pressure_score": full_report["pressure_score"],
