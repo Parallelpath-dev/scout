@@ -789,8 +789,8 @@ def synthesize_for_client(client_slug: str):
         "generated_at": datetime.utcnow().isoformat(),
     }
 
-    # Save briefing
-      supabase.table("briefings").upsert({
+# Save briefing
+    supabase.table("briefings").upsert({
         "client_id": client_id,
         "week_of": week_of,
         "pressure_score": full_report["pressure_score"],
@@ -799,11 +799,9 @@ def synthesize_for_client(client_slug: str):
         "full_report": json.dumps(full_report),
         "created_at": datetime.utcnow().isoformat(),
     }, on_conflict="client_id,week_of").execute()
-
     # Mark emails as analyzed
     if emails:
         mark_emails_analyzed(client_id, week_cutoff)
-
     print(f"[synthesizer] Briefing saved — Pressure: {full_report['pressure_score']} | Advisors: {full_report['advisors_activated']}")
     return full_report
 
