@@ -701,8 +701,8 @@ def synthesize_for_client(client_slug: str):
 
     print(f"[synthesizer] Call 1: The Analyst...")
     analyst_response = anthropic.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=6000,
+        model="claude-sonnet-4-6",
+        max_tokens=8000,
         temperature=0.1,
         system=ANALYST_SYSTEM,
         messages=[{"role": "user", "content": analyst_prompt}],
@@ -790,15 +790,15 @@ def synthesize_for_client(client_slug: str):
     }
 
     # Save briefing
-    supabase.table("briefings").upsert({
-        "client_id": client_id,
-        "week_of": week_of,
-        "pressure_score": full_report["pressure_score"],
-        "summary": full_report["executive_summary"],
-        "developments": full_report["top_developments"],
-        "full_report": json.dumps(full_report),
-        "created_at": datetime.utcnow().isoformat(),
-    }).execute()
+supabase.table("briefings").upsert({
+    "client_id": client_id,
+    "week_of": week_of,
+    "pressure_score": full_report["pressure_score"],
+    "summary": full_report["executive_summary"],
+    "developments": full_report["top_developments"],
+    "full_report": json.dumps(full_report),
+    "created_at": datetime.utcnow().isoformat(),
+}, on_conflict="client_id,week_of").execute()
 
     # Mark emails as analyzed
     if emails:
