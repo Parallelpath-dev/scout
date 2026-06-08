@@ -735,7 +735,7 @@ def synthesize_for_client(client_slug: str):
     print(f"[synthesizer] Call 2: The Strategist...")
     strategist_response = anthropic.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=6000,
+        max_tokens=8000,
         temperature=0.3,
         system=STRATEGIST_SYSTEM,
         messages=[{"role": "user", "content": strategist_prompt}],
