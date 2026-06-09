@@ -21,48 +21,6 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ── Semrush API Helpers ───────────────────────────────────────────────────────
 
-def get_domain_overview(domain: str) -> dict:
-    """Get traffic and keyword overview for a domain."""
-    params = {
-        "type": "domain_ranks",
-        "key": SEMRUSH_API_KEY,
-        "domain": domain,
-        "database": "us",
-        "export_columns": "Dn,Rk,Or,Ot,Oc,Ad,At,Ac",
-    }
-    resp = requests.get(SEMRUSH_BASE, params=params)
-    resp.raise_for_status()
-
-    lines = resp.text.strip().split("\n")
-    if len(lines) < 2:
-        return {}
-
-    headers = lines[0].split(";")
-    values = lines[1].split(";")
-    return dict(zip(headers, values))
-
-
-def get_organic_keywords(domain: str, limit: int = 50, brand_terms: list = None) -> list[dict]:
-    """Get top organic keywords for a domain, filtering brand terms if provided."""
-    params = {
-        "type": "domain_organic",
-        "key": SEMRUSH_API_KEY,
-        "domain": domain,
-        "database": "us",
-        "display_limit": limit,
-        "export_columns": "Ph,Po,Pp,Pd,Nq,Cp,Ur,Tr,Tc,Co,Nr,Td",
-        "display_sort": "tr_desc",
-    }
-    resp = requests.get(SEMRUSH_BASE, params=params)
-    resp.raise_for_status()
-
-    lines = resp.text.strip().split("\n")
-    if len(lines) < 2:
-        return []
-
-    headers = lines[0].split(";")
-    keywords = [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
-
     # Filter brand terms if provided
     if brand_terms:
         brand_terms_lower = [t.lower() for t in brand_terms]
@@ -72,29 +30,6 @@ def get_organic_keywords(domain: str, limit: int = 50, brand_terms: list = None)
         ]
 
     return keywords
-
-
-def get_paid_keywords(domain: str, limit: int = 100) -> list[dict]:
-    """Get paid search keywords for a domain."""
-    params = {
-        "type": "domain_adwords",
-        "key": SEMRUSH_API_KEY,
-        "domain": domain,
-        "database": "us",
-        "display_limit": limit,
-        "export_columns": "Ph,Po,Pp,Pd,Ab,Nq,Cp,Tr,Tc,Co,Nr,Td",
-        "display_sort": "tr_desc",
-    }
-    resp = requests.get(SEMRUSH_BASE, params=params)
-    resp.raise_for_status()
-
-    lines = resp.text.strip().split("\n")
-    if len(lines) < 2:
-        return []
-
-    headers = lines[0].split(";")
-    return [dict(zip(headers, line.split(";"))) for line in lines[1:] if line]
-
 
 def get_keyword_positions(domain: str, keywords: list[str], campaign_id: str = "29906708") -> list[dict]:
     """
@@ -198,14 +133,6 @@ def collect_for_client(client_slug: str):
         print(f"[semrush] ERROR: No domain in config for '{client_slug}'")
         return
 
-    # ── Client own domain overview ────────────────────────────────────────────
-    print(f"[semrush]   Collecting client domain: {client_domain}")
-    try:
-        overview = get_domain_overview(client_domain)
-        save_signal(client_id, None, "semrush", "client_domain_overview", overview)
-    except Exception as e:
-        print(f"[semrush]   ERROR client domain_overview: {e}")
-
     # ── Client keyword positions for tracked keywords ─────────────────────────
     if tracked_keywords:
         print(f"[semrush]   Collecting client keyword positions for {len(tracked_keywords)} tracked terms")
@@ -230,29 +157,6 @@ def collect_for_client(client_slug: str):
             continue
 
         print(f"[semrush]   Collecting: {comp_domain}")
-
-        # Domain overview
-        try:
-            overview = get_domain_overview(comp_domain)
-            save_signal(client_id, comp_id, "semrush", "domain_overview", overview)
-        except Exception as e:
-            print(f"[semrush]   ERROR domain_overview: {e}")
-
-        # Organic keywords — filtered by brand terms
-        try:
-            organic = get_organic_keywords(comp_domain, brand_terms=brand_terms)
-            filtered_count = len(organic)
-            print(f"[semrush]   {comp_name}: {filtered_count} organic keywords after brand filter")
-            save_signal(client_id, comp_id, "semrush", "organic_keywords", {"keywords": organic})
-        except Exception as e:
-            print(f"[semrush]   ERROR organic_keywords: {e}")
-
-        # Paid keywords — cap raised to 100
-        try:
-            paid = get_paid_keywords(comp_domain)
-            save_signal(client_id, comp_id, "semrush", "paid_keywords", {"keywords": paid})
-        except Exception as e:
-            print(f"[semrush]   ERROR paid_keywords: {e}")
 
         # Competitor keyword positions for tracked keywords
         if tracked_keywords:
