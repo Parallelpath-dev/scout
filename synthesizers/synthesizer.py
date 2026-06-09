@@ -702,7 +702,7 @@ def synthesize_for_client(client_slug: str):
     print(f"[synthesizer] Call 1: The Analyst...")
     analyst_response = anthropic.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=8000,
+        max_tokens=10000,
         temperature=0.1,
         system=ANALYST_SYSTEM,
         messages=[{"role": "user", "content": analyst_prompt}],
