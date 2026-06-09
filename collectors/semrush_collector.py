@@ -21,16 +21,6 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ── Semrush API Helpers ───────────────────────────────────────────────────────
 
-    # Filter brand terms if provided
-    if brand_terms:
-        brand_terms_lower = [t.lower() for t in brand_terms]
-        keywords = [
-            kw for kw in keywords
-            if not any(bt in kw.get("Ph", "").lower() for bt in brand_terms_lower)
-        ]
-
-    return keywords
-
 def get_keyword_positions(domain: str, keywords: list[str], campaign_id: str = "29906708") -> list[dict]:
     """
     Get keyword positions using Position Tracking API.
