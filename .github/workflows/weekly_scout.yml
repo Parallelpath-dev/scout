@@ -104,21 +104,6 @@ jobs:
             "
           fi
 
-      - name: Build dashboards
-        run: |
-          INPUT_SLUG="${{ github.event.inputs.client_slug }}"
-          if [ -n "$INPUT_SLUG" ]; then
-            SCOUT_CLIENT_SLUG="$INPUT_SLUG" python builders/dashboard_builder.py "$INPUT_SLUG"
-          else
-            echo '${{ steps.get-clients.outputs.clients }}' | python -c "
-          import sys, json, subprocess, os
-          clients = json.load(sys.stdin)
-          for slug in clients:
-              env = {**os.environ, 'SCOUT_CLIENT_SLUG': slug}
-              subprocess.run(['python', 'builders/dashboard_builder.py', slug], check=False, env=env)
-            "
-          fi
-
 
       - name: Send email digest
         env:
