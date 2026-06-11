@@ -238,6 +238,22 @@ body {
 
 .tool-card:hover .tool-cta { opacity: 0.88; gap: 12px; }
 
+  /* ── Scout client buttons ─────────────────────────────────────────────────── */
+.scout-clients {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+.scout-clients .tool-cta {
+  text-decoration: none;
+  text-align: center;
+  font-size: 11px;
+}
+.scout-clients .tool-cta:hover {
+  opacity: 0.88;
+}
+
 /* ── Footer ───────────────────────────────────────────────────────────────── */
 .footer {
   margin-top: 64px;
@@ -270,13 +286,12 @@ body {
   <div class="header-eyebrow">Parallel Path · SideCountry AI</div>
   <h1 class="header-title">AI <span>Scout</span></h1>
   <p class="header-subtitle">Proprietary intelligence tools built for your brand's competitive advantage.</p>
-<img src="MattressWarehouse-stacked-1200x1200.png" alt="Mattress Warehouse" style="width:180px;display:block;margin:28px auto 0;mix-blend-mode:screen;">
 </div>
 
 <!-- Tool cards -->
-<div class="tools-grid" style="margin-top:25px;">
+<div class="tools-grid">
 
-  <a class="tool-card tool-card--scout" href="https://parallelpath-dev.github.io/scout/" onclick="showLoading('Launching Scout...')">
+  <div class="tool-card tool-card--scout">
     <div class="tool-icon tool-icon--scout">
       <svg viewBox="0 0 24 24" fill="none">
         <circle cx="10" cy="10" r="6.5" stroke="#DCBE4C" stroke-width="1.8"/>
@@ -287,8 +302,11 @@ body {
       <div class="tool-name">Competitive Intelligence</div>
       <div class="tool-desc">Weekly monitoring of competitor search, social, paid, and owned channel activity — synthesized into actionable intelligence by AI.</div>
     </div>
-    <div class="tool-cta tool-cta--scout">Open Scout →</div>
-  </a>
+    <div class="scout-clients">
+      <a class="tool-cta tool-cta--scout" href="https://parallelpath-dev.github.io/scout/?client=mattress-warehouse" onclick="showLoading('Launching Scout — Mattress Warehouse...')">Mattress Warehouse →</a>
+      <a class="tool-cta tool-cta--scout" href="https://parallelpath-dev.github.io/scout/?client=independent-pet-partners" onclick="showLoading('Launching Scout — IPP...')">Independent Pet Partners →</a>
+    </div>
+  </div>
 
   <a class="tool-card tool-card--sentiment" href="https://parallelpath-dev.github.io/scout/MW_Executive_Report_V3.html" onclick="showLoading('Launching Consumer Sentiment...')">
     <div class="tool-icon tool-icon--sentiment">
