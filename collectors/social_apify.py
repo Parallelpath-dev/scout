@@ -117,8 +117,8 @@ def collect_instagram(handle: str) -> dict:
             ).replace(tzinfo=None) > cutoff
         ]
 
-        avg_likes = sum(p.get("likes", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
-        avg_comments = sum(p.get("comments", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
+        avg_likes = sum(p.get("likesCount", 0) or p.get("likes", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
+        avg_comments = sum(p.get("commentsCount", 0) or p.get("comments", 0) for p in recent_posts) / len(recent_posts) if recent_posts else 0
 
         # Extract content themes from captions
         captions = [p.get("caption", "") for p in recent_posts if p.get("caption")]
