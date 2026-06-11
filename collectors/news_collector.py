@@ -18,33 +18,33 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 GOOGLE_NEWS_RSS = "https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
 
 # Brand names that are also common words/places — need category qualifier in queries
-GENERIC_NAMES = {"casper", "purple", "nectar", "saatva", "birch", "bear"}
-
-# Known irrelevant sources — these will never contain mattress brand intelligence
-BLOCKED_SOURCES = {
-    # Casper, Wyoming local news
+# Defaults — overridden by client config.news if present
+DEFAULT_GENERIC_NAMES = {"casper", "purple", "nectar", "saatva", "birch", "bear"}
+DEFAULT_BLOCKED_SOURCES = {
     "oil city news", "k2 radio", "cowboy state daily", "wyofile",
     "casper star-tribune", "wyomingnewsnow", "kgwn", "kcwy",
-    # Generic color/word noise for Purple
     "guitarplayer", "soranews", "purple row", "annandale today",
     "greater greater washington",
 }
+DEFAULT_QUALIFIERS = ["mattress", "sleep", "bed", ".com", "sleep technology", "smart bed", "foam", "hybrid mattress"]
 
 
-def is_blocked_source(source: str) -> bool:
+def is_blocked_source(source: str, blocked_sources: set = None) -> bool:
+    blocked_sources = blocked_sources or DEFAULT_BLOCKED_SOURCES
     s = source.lower()
-    return any(blocked in s for blocked in BLOCKED_SOURCES)
+    return any(blocked in s for blocked in blocked_sources)
 
 
-def is_relevant_article(title: str, summary: str, comp_name: str, comp_domain: str) -> bool:
-    """For generic names, require a mattress/sleep qualifier. For specific names, name presence is enough."""
+def is_relevant_article(title: str, summary: str, comp_name: str, comp_domain: str,
+                        generic_names: set = None, qualifiers: list = None) -> bool:
+    """For generic names, require a category qualifier. For specific names, name presence is enough."""
+    generic_names = generic_names or DEFAULT_GENERIC_NAMES
+    qualifiers = qualifiers or DEFAULT_QUALIFIERS
     t = title.lower()
     s = (summary or "").lower()
     name = comp_name.lower()
     domain = comp_domain.replace(".com", "").replace(".co", "").lower()
-
-    if name in GENERIC_NAMES:
-        qualifiers = ["mattress", "sleep", "bed", ".com", "sleep technology", "smart bed"]
+    if name in generic_names:
         name_present = name in t or domain in t or name in s or domain in s
         domain_exact = f"{domain}.com" in t or f"{domain}.com" in s
         has_qualifier = any(q in t or q in s for q in qualifiers)
@@ -53,10 +53,11 @@ def is_relevant_article(title: str, summary: str, comp_name: str, comp_domain: s
         return name in t or domain in t or name in s or domain in s
 
 
-def build_queries(comp_name: str, comp_domain: str) -> list[str]:
+def build_queries(comp_name: str, comp_domain: str, generic_names: set = None) -> list[str]:
     """Build search queries — generic names get qualified to avoid noise."""
+    generic_names = generic_names or DEFAULT_GENERIC_NAMES
     name = comp_name.lower()
-    if name in GENERIC_NAMES:
+    if name in generic_names:
         return [
             f'"{comp_name}" mattress',
             f'"{comp_name}" sleep',
@@ -71,13 +72,13 @@ def build_queries(comp_name: str, comp_domain: str) -> list[str]:
         ]
 
 
-def fetch_news(query: str, max_items: int = 15) -> list[dict]:
+def fetch_news(query: str, max_items: int = 15, blocked_sources: set = None) -> list[dict]:
     url = GOOGLE_NEWS_RSS.format(query=query.replace(" ", "+"))
     feed = feedparser.parse(url)
     articles = []
     for entry in feed.entries[:max_items]:
         source = entry.get("source", {}).get("title", "Unknown")
-        if is_blocked_source(source):
+        if is_blocked_source(source, blocked_sources):
             continue
         articles.append({
             "title": entry.get("title", ""),
@@ -135,6 +136,12 @@ def collect_for_client(client_slug: str):
     config = result.data.get("config", {})
     competitors = config.get("competitors", [])
 
+    # Load client-specific news filtering from config (falls back to defaults)
+    news_config = config.get("news", {})
+    generic_names = set(news_config.get("generic_names", [])) or DEFAULT_GENERIC_NAMES
+    qualifiers = news_config.get("qualifiers", []) or DEFAULT_QUALIFIERS
+    blocked_sources = set(news_config.get("blocked_sources", [])) or DEFAULT_BLOCKED_SOURCES
+
     for comp in competitors:
         comp_domain = comp.get("domain")
         comp_name = comp.get("name", comp_domain)
@@ -145,16 +152,16 @@ def collect_for_client(client_slug: str):
             continue
 
         print(f"[news]   Collecting for: {comp_name}")
-        queries = build_queries(comp_name, comp_domain)
+        queries = build_queries(comp_name, comp_domain, generic_names)
         all_articles = []
         seen_urls = set()
 
         for query in queries:
-            for article in fetch_news(query, max_items=10):
+            for article in fetch_news(query, max_items=10, blocked_sources=blocked_sources):
                 url = article["link"]
                 if url not in seen_urls:
                     seen_urls.add(url)
-                    if is_relevant_article(article["title"], article["summary"], comp_name, comp_domain):
+                    if is_relevant_article(article["title"], article["summary"], comp_name, comp_domain, generic_names, qualifiers):
                         article["url_hash"] = dedupe_key(url)
                         article["query"] = query
                         all_articles.append(article)
