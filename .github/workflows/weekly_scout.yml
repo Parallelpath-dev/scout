@@ -15,8 +15,6 @@ env:
   SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   SEMRUSH_API_KEY: ${{ secrets.SEMRUSH_API_KEY }}
-  REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-  REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
   YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
   APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
   
@@ -75,20 +73,6 @@ jobs:
           clients = json.load(sys.stdin)
           for slug in clients:
               subprocess.run(['python', 'collectors/news_collector.py', slug], check=False)
-            "
-          fi
-
-      - name: Run Reddit collector
-        run: |
-          INPUT_SLUG="${{ github.event.inputs.client_slug }}"
-          if [ -n "$INPUT_SLUG" ]; then
-            python collectors/reddit_collector.py "$INPUT_SLUG"
-          else
-            echo '${{ steps.get-clients.outputs.clients }}' | python -c "
-          import sys, json, subprocess
-          clients = json.load(sys.stdin)
-          for slug in clients:
-              subprocess.run(['python', 'collectors/reddit_collector.py', slug], check=False)
             "
           fi
 
