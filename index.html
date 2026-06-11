@@ -769,7 +769,10 @@ const params = new URLSearchParams(location.search)
 const clientSlug = params.get('client') || 'mattress-warehouse'
 const API = `https://mxcfinwrgvxrwoyzjhhs.supabase.co/functions/v1/get-briefing?client=${encodeURIComponent(clientSlug)}`
 
-async function loadData() {
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+  async function loadData() {
   try {
     const res = await fetch(API)
     const d = await res.json()
@@ -854,13 +857,13 @@ function renderTopDevelopments(devs) {
     return `<div class="development-card ${cls}">
       <div class="development-card__header"><div class="development-card__header-left">
         <span class="badge ${badgeCls}">${urgLabel}</span>
-        ${dev.competitor ? `<span class="competitor-tag">${dev.competitor}</span>` : ''}
+        ${dev.competitor ? `<span class="competitor-tag">${esc(dev.competitor)}</span>` : ''}
       </div></div>
-      <h3 class="development-card__headline">${dev.headline||''}</h3>
-      <p class="development-card__detail">${dev.detail||''}</p>
+      <h3 class="development-card__headline">${esc(dev.headline)}</h3>
+      <p class="development-card__detail">${esc(dev.detail)}</p>
       ${dev.recommended_action ? `<div class="development-card__action">
         ${dev.advisor_role ? `<span class="development-card__role">${dev.advisor_role} recommends:</span>` : ''}
-        <span class="development-card__action-text">${dev.recommended_action}</span>
+        <span class="development-card__action-text">${esc(dev.recommended_action)}</span>
       </div>` : ''}
     </div>`
   }).join('')
@@ -943,9 +946,9 @@ function renderSearchRecs(recs) {
   if (!recs.length) { c.innerHTML=`<div class="empty-state">No search recommendations this week.</div>`; return }
   c.innerHTML = recs.map(r=>`<div class="signal-card">
     <div class="signal-card__header">${r.advisor_role?`<span class="signal-card__role">${r.advisor_role}</span>`:''}</div>
-    ${r.recommended_action?`<div class="signal-card__title">${r.recommended_action}</div>`:''}
-    ${r.observation?`<div class="signal-card__observation">${r.observation}</div>`:''}
-    ${r.opportunity?`<div class="signal-card__body">${r.opportunity}</div>`:''}
+    ${r.recommended_action?`<div class="signal-card__title">${esc(r.recommended_action)}</div>`:''}
+    ${r.observation?`<div class="signal-card__observation">${esc(r.observation)}</div>`:''}
+    ${r.opportunity?`<div class="signal-card__body">${esc(r.opportunity)}</div>`:''}
   </div>`).join('')
 }
 
@@ -972,7 +975,7 @@ function renderMetaAds(metaAds) {
         <span class="col-note">${comp.ads_sampled||20} sampled</span>
       </div>
       ${hasReal ? `<div class="ad-rows">${ads.filter(a=>a.body_text && !a.body_text.includes('{{')).map(ad=>`<div class="ad-row">
-        <div class="ad-row__body">${ad.body_text.slice(0,120)}${ad.body_text.length>120?'…':''}</div>
+        <div class="ad-row__body">${esc(ad.body_text?.slice(0,120))}${ad.body_text?.length>120?'…':''}</div>
         <div class="ad-row__meta">
           <span class="ad-format-pill">${ad.display_format||'UNKNOWN'}</span>
           ${ad.has_video?'<span class="ad-format-pill ad-format-pill--video">VIDEO</span>':''}
