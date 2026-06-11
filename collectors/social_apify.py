@@ -126,8 +126,8 @@ def collect_instagram(handle: str) -> dict:
         return {
             "platform": "instagram",
             "handle": handle,
-            "follower_": profile.get("followers"),
-            "following_": profile.get("followingCount"),
+            "follower_count": profile.get("followersCount") or profile.get("followers"),
+            "following_count": profile.get("followingCount"),
             "posts_count": profile.get("postsCount"),
             "posts_last_30d": len(recent_posts),
             "avg_likes": round(avg_likes, 1),
