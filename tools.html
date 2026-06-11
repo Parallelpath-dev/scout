@@ -238,21 +238,29 @@ body {
 
 .tool-card:hover .tool-cta { opacity: 0.88; gap: 12px; }
 
-  /* ── Scout client buttons ─────────────────────────────────────────────────── */
-.scout-clients {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: auto;
-}
-.scout-clients .tool-cta {
-  text-decoration: none;
+/* ── Scout client select ──────────────────────────────────────────────────── */
+.scout-clients { margin-top: auto; }
+.scout-select {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--pp-mustard);
+  color: var(--pp-cadet);
+  font-family: var(--fh);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23233D4D' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
   text-align: center;
-  font-size: 11px;
 }
-.scout-clients .tool-cta:hover {
-  opacity: 0.88;
-}
+.scout-select:hover { opacity: 0.88; }
 
 /* ── Footer ───────────────────────────────────────────────────────────────── */
 .footer {
