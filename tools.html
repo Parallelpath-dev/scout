@@ -303,8 +303,11 @@ body {
       <div class="tool-desc">Weekly monitoring of competitor search, social, paid, and owned channel activity — synthesized into actionable intelligence by AI.</div>
     </div>
     <div class="scout-clients">
-      <a class="tool-cta tool-cta--scout" href="https://parallelpath-dev.github.io/scout/?client=mattress-warehouse" onclick="showLoading('Launching Scout — Mattress Warehouse...')">Mattress Warehouse →</a>
-      <a class="tool-cta tool-cta--scout" href="https://parallelpath-dev.github.io/scout/?client=independent-pet-partners" onclick="showLoading('Launching Scout — IPP...')">Independent Pet Partners →</a>
+      <select class="scout-select" onchange="if(this.value){showLoading('Launching Scout...');window.location.href=this.value}">
+        <option value="">Open Scout →</option>
+        <option value="https://parallelpath-dev.github.io/scout/?client=mattress-warehouse">Mattress Warehouse</option>
+        <option value="https://parallelpath-dev.github.io/scout/?client=independent-pet-partners">Independent Pet Partners</option>
+      </select>
     </div>
   </div>
 
