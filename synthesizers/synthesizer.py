@@ -204,7 +204,8 @@ def slim_signal(source: str, signal: dict) -> dict | None:
             return {
                 "competitor": comp,
                 "platform": "meta_ads",
-                "total_active_ads": data.get("total_active_ads", 0),
+                "total_ads_in_library": data.get("total_available_ads") or data.get("total_active_ads", 0),
+                "ads_sampled": len(ads),
                 "ads": [
                     {
                         "creative_body": a.get("ad_creative_body", "")[:200],
@@ -438,7 +439,7 @@ Produce structured competitive intelligence as JSON:
   "meta_ads_intelligence": [
     {{
       "competitor": "<name>",
-      "active_ad_count": <integer>,
+      "total_ads_in_library": <integer — real library count, NOT the sample size>,
       "dominant_format": "<video|image|carousel|unknown>",
       "messaging_theme": "<what the ads are saying>",
       "estimated_campaign_start": "<date or unknown>",
