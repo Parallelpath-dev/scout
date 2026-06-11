@@ -255,6 +255,7 @@ def fetch_week_signals(client_id: str, client_name: str, days_back: int = 7) -> 
         .select("*, competitors(name, domain)")
         .eq("client_id", client_id)
         .gte("collected_at", cutoff)
+        .order("collected_at", desc=True)
         .execute()
     )
 
@@ -318,8 +319,16 @@ def fetch_week_signals(client_id: str, client_name: str, days_back: int = 7) -> 
             elif signal_type == "youtube_apify":
                 organized["social_youtube"].append(slimmed)
 
+    # Deduplicate: keep only the most recent signal per competitor per category
     for key in organized:
-        organized[key] = organized[key][:15]
+        seen = {}
+        deduped = []
+        for sig in organized[key]:
+            comp = sig.get("competitor", "Unknown")
+            if comp not in seen:
+                seen[comp] = sig
+                deduped.append(sig)
+        organized[key] = deduped[:15]
 
     return organized
 
