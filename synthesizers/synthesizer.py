@@ -101,7 +101,7 @@ ADVISOR_PROMPTS = {
 
 # ── Signal Slimming ───────────────────────────────────────────────────────────
 
-def slim_signal(source: str, signal: dict) -> dict | None:
+def slim_signal(source: str, signal: dict, client_name: str = "Client") -> dict | None:
     """Reduce each signal to only what Claude needs. Prevents token overflow."""
     comp = signal.get("competitor", "Unknown")
     data = signal.get("data", {})
@@ -128,7 +128,7 @@ def slim_signal(source: str, signal: dict) -> dict | None:
             }
         if signal_type == "client_keyword_positions":
             return {
-                "competitor": "Mattress Warehouse (client)",
+                "competitor": f"{client_name} (client)",
                 "signal_type": "client_keyword_positions",
                 "keyword_positions": [
                     {"keyword": k.get("keyword"), "position": k.get("position"), "volume": k.get("volume")}
@@ -246,7 +246,7 @@ def slim_signal(source: str, signal: dict) -> dict | None:
 
 # ── Fetch Signals ─────────────────────────────────────────────────────────────
 
-def fetch_week_signals(client_id: str, days_back: int = 7) -> dict:
+def fetch_week_signals(client_id: str, client_name: str, days_back: int = 7) -> dict:
     """Pull all signals from the past week, slim them, and organize by source."""
     cutoff = (datetime.utcnow() - timedelta(days=days_back)).isoformat()
 
@@ -276,7 +276,7 @@ def fetch_week_signals(client_id: str, days_back: int = 7) -> dict:
     for signal in (result.data or []):
         comp_name = (signal.get("competitors") or {}).get("name", "Unknown")
         if not signal.get("competitors"):
-            comp_name = "Mattress Warehouse"
+            comp_name = client_name
         source = signal.get("source", "other")
         signal_type = signal.get("signal_type", "")
 
@@ -287,7 +287,7 @@ def fetch_week_signals(client_id: str, days_back: int = 7) -> dict:
             "collected_at": signal["collected_at"],
         }
 
-        slimmed = slim_signal(source, entry)
+        slimmed = slim_signal(source, entry, client_name)
         if slimmed is None:
             continue
 
@@ -349,6 +349,18 @@ def fetch_recent_competitor_emails(client_id: str, days_back: int = 7) -> list:
 
     return emails
 
+# ── JSON Extraction Helper ────────────────────────────────────────────────────
+
+def extract_json(raw: str) -> dict:
+    """Extract JSON from Claude response, handling markdown fences and whitespace."""
+    raw = raw.strip()
+    # Remove markdown fences if present
+    if raw.startswith("```"):
+        lines = raw.split("\n")
+        # Drop first line (```json or ```) and last line (```)
+        lines = [l for l in lines if not l.strip().startswith("```")]
+        raw = "\n".join(lines).strip()
+    return json.loads(raw)
 
 # ── Call 1: The Analyst ───────────────────────────────────────────────────────
 
@@ -689,7 +701,7 @@ def synthesize_for_client(client_slug: str):
     week_cutoff = (datetime.utcnow() - timedelta(days=7)).isoformat()
 
     # Fetch signals and emails
-    signals = fetch_week_signals(client_id)
+    signals = fetch_week_signals(client_id, client_name)
     emails = fetch_recent_competitor_emails(client_id)
     total_signals = sum(len(v) for v in signals.values())
     print(f"[synthesizer] Found {total_signals} signals, {len(emails)} competitor emails")
@@ -716,14 +728,11 @@ def synthesize_for_client(client_slug: str):
 
     try:
         raw = analyst_response.content[0].text.strip()
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        analysis = json.loads(raw.strip())
+        analysis = extract_json(raw)
         print(f"[synthesizer] Call 1 complete — pressure score: {analysis.get('pressure_score')}")
     except json.JSONDecodeError as e:
         print(f"[synthesizer] ERROR: Failed to parse Analyst response: {e}")
+        print(f"[synthesizer] Raw response (first 500 chars): {raw[:500]}")
         return
 
     # ── Call 2: The Strategist ────────────────────────────────────────────────
@@ -749,14 +758,11 @@ def synthesize_for_client(client_slug: str):
 
     try:
         raw2 = strategist_response.content[0].text.strip()
-        if raw2.startswith("```"):
-            raw2 = raw2.split("```")[1]
-            if raw2.startswith("json"):
-                raw2 = raw2[4:]
-        strategy = json.loads(raw2.strip())
+        strategy = extract_json(raw2)
         print(f"[synthesizer] Call 2 complete — {len(strategy.get('top_developments', []))} developments")
     except json.JSONDecodeError as e:
         print(f"[synthesizer] ERROR: Failed to parse Strategist response: {e}")
+        print(f"[synthesizer] Raw response (first 500 chars): {raw2[:500]}")
         return
 
     # ── Merge outputs ─────────────────────────────────────────────────────────
@@ -796,19 +802,24 @@ def synthesize_for_client(client_slug: str):
     }
 
 # Save briefing
-    supabase.table("briefings").upsert({
-        "client_id": client_id,
-        "week_of": week_of,
-        "pressure_score": full_report["pressure_score"],
-        "summary": full_report["executive_summary"],
-        "developments": full_report["top_developments"],
-        "full_report": json.dumps(full_report),
-        "created_at": datetime.utcnow().isoformat(),
-    }, on_conflict="client_id,week_of").execute()
+    try:
+        supabase.table("briefings").upsert({
+            "client_id": client_id,
+            "week_of": week_of,
+            "pressure_score": full_report["pressure_score"],
+            "summary": full_report["executive_summary"],
+            "developments": full_report["top_developments"],
+            "full_report": json.dumps(full_report),
+            "created_at": datetime.utcnow().isoformat(),
+        }, on_conflict="client_id,week_of").execute()
+        print(f"[synthesizer] Briefing saved — Pressure: {full_report['pressure_score']} | Advisors: {full_report['advisors_activated']}")
+    except Exception as e:
+        print(f"[synthesizer] CRITICAL: Failed to save briefing: {e}")
+        raise
+
     # Mark emails as analyzed
     if emails:
         mark_emails_analyzed(client_id, week_cutoff)
-    print(f"[synthesizer] Briefing saved — Pressure: {full_report['pressure_score']} | Advisors: {full_report['advisors_activated']}")
     return full_report
 
 
