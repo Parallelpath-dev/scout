@@ -208,9 +208,9 @@ def slim_signal(source: str, signal: dict, client_name: str = "Client") -> dict 
                 "ads_sampled": len(ads),
                 "ads": [
                     {
-                        "creative_body": a.get("ad_creative_body", "")[:200],
-                        "link_title": a.get("ad_creative_link_title", ""),
-                        "formats": a.get("formats", []),
+                        "creative_body": (a.get("body_text") or a.get("ad_creative_body") or "")[:200],
+                        "link_title": a.get("title") or a.get("ad_creative_link_title") or "",
+                        "formats": a.get("display_format") or a.get("formats", []),
                         "start_date": a.get("start_date"),
                         "is_active": a.get("is_active", True),
                     }
