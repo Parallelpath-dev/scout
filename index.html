@@ -802,7 +802,8 @@ function renderAll(d) {
   document.querySelectorAll('.js-week-of').forEach(el => el.textContent = weekStr)
   document.getElementById('topbar-date').textContent = weekStr
   document.getElementById('sidebar-week').textContent = 'Week of ' + (meta.weekOf ? new Date(meta.weekOf).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—')
-  document.getElementById('sidebar-client-label').textContent = meta.clientName || 'Mattress Warehouse'
+  document.getElementById('topbar-client').textContent = (meta.clientName || 'Mattress Warehouse') + ' — Competitive Intelligence'
+  document.querySelector('.js-client-name').textContent = meta.clientName || 'Mattress Warehouse'
 
   renderOverview(d)
   renderSearchIntelligence(d)
