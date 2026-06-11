@@ -765,7 +765,9 @@ function showTab(id, el) {
 }
 
 // ── API FETCH ────────────────────────────────────────────────────────────────
-const API = 'https://mxcfinwrgvxrwoyzjhhs.supabase.co/functions/v1/get-briefing?client=mattress-warehouse'
+const params = new URLSearchParams(location.search)
+const clientSlug = params.get('client') || 'mattress-warehouse'
+const API = `https://mxcfinwrgvxrwoyzjhhs.supabase.co/functions/v1/get-briefing?client=${encodeURIComponent(clientSlug)}`
 
 async function loadData() {
   try {
