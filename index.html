@@ -78,6 +78,10 @@ a:hover { text-decoration:underline; }
 .week-badge { font-family:var(--fh); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); display:flex; align-items:center; gap:8px; }
 .week-dot { width:7px; height:7px; border-radius:50%; background:var(--pp-spring); flex-shrink:0; animation:pulse 2.5s infinite; }
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.8)} }
+#client-switcher { display:none; position:absolute; top:100%; left:0; right:0; background:var(--surface2); border:1px solid var(--border); border-radius:8px; margin-top:8px; z-index:50; padding:4px; }
+#client-switcher.visible { display:block; }
+#client-switcher a { display:block; padding:10px 14px; color:var(--pp-linen); text-decoration:none; font-family:var(--fh); font-size:12px; font-weight:600; border-radius:6px; letter-spacing:0.04em; }
+#client-switcher a:hover { background:rgba(246,237,230,0.08); }
 
 /* ── MAIN + TOPBAR ────────────────────────────────────────────────────────── */
 .main { overflow-y:auto; }
@@ -338,10 +342,17 @@ a:hover { text-decoration:underline; }
     <div class="logo-by">by Parallel Path</div>
   </div>
 
-  <div class="client-badge">
-  <div class="client-badge-label">Monitoring Client</div>
-  <div class="client-badge-name" id="sidebar-client-name">Mattress Warehouse</div>
-</div>
+  <div class="client-badge" style="cursor:pointer;position:relative;" onclick="document.getElementById('client-switcher').classList.toggle('visible')">
+    <div class="client-badge-label">Monitoring Client</div>
+    <div class="client-badge-name" id="sidebar-client-name" style="display:flex;align-items:center;justify-content:space-between;">
+      <span id="sidebar-client-label">Mattress Warehouse</span>
+      <span style="font-size:10px;opacity:0.5;">▾</span>
+    </div>
+    <div id="client-switcher">
+      <a href="?client=mattress-warehouse">Mattress Warehouse</a>
+      <a href="?client=independent-pet-partners">Independent Pet Partners</a>
+    </div>
+  </div>
 
   <div class="nav-section">Intelligence</div>
 
@@ -791,7 +802,7 @@ function renderAll(d) {
   document.querySelectorAll('.js-week-of').forEach(el => el.textContent = weekStr)
   document.getElementById('topbar-date').textContent = weekStr
   document.getElementById('sidebar-week').textContent = 'Week of ' + (meta.weekOf ? new Date(meta.weekOf).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—')
-  document.getElementById('sidebar-client-name').textContent = meta.clientName || 'Mattress Warehouse'
+  document.getElementById('sidebar-client-label').textContent = meta.clientName || 'Mattress Warehouse'
 
   renderOverview(d)
   renderSearchIntelligence(d)
