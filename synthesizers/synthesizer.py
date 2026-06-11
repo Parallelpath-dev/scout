@@ -381,9 +381,7 @@ Three hard rules:
    sampled ads' creative themes: messaging angles, product focus, offer/discount language, 
    formats (DCO, video, carousel, image), UGC vs. brand content, and funnel stage 
    (awareness/Prospecting vs. conversion/retargeting visible in UTM campaign names).
-
-IMPORTANT — Non-redundancy rule: The Analyst's intelligence is already in the briefing and will be displayed alongside your output. Your job is to ADD strategic value, not restate findings. When referencing Analyst data, use a brief phrase (e.g. "Mattress Firm's 3-email week at 60% off") as context for your recommendation — never re-describe what the Analyst already documented.
-
+   
 Output format: Always respond with valid JSON matching the schema provided."""
 
 
