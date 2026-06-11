@@ -53,9 +53,10 @@ def is_relevant_article(title: str, summary: str, comp_name: str, comp_domain: s
         return name in t or domain in t or name in s or domain in s
 
 
-def build_queries(comp_name: str, comp_domain: str, generic_names: set = None) -> list[str]:
+def build_queries(comp_name: str, comp_domain: str, generic_names: set = None, qualifiers: list = None) -> list[str]:
     """Build search queries — generic names get qualified to avoid noise."""
     generic_names = generic_names or DEFAULT_GENERIC_NAMES
+    qualifiers = qualifiers or DEFAULT_QUALIFIERS
     name = comp_name.lower()
     if name in generic_names:
         top_qualifiers = [q for q in qualifiers if q != ".com"][:3]
@@ -153,7 +154,7 @@ def collect_for_client(client_slug: str):
             continue
 
         print(f"[news]   Collecting for: {comp_name}")
-        queries = build_queries(comp_name, comp_domain, generic_names)
+        queries = build_queries(comp_name, comp_domain, generic_names, qualifiers)
         all_articles = []
         seen_urls = set()
 
