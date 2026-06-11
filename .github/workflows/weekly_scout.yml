@@ -14,7 +14,6 @@ env:
   SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
   SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-  SEMRUSH_API_KEY: ${{ secrets.SEMRUSH_API_KEY }}
   YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
   APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
   
@@ -50,20 +49,6 @@ jobs:
           slugs = [r['slug'] for r in result.data]
           print('clients=' + json.dumps(slugs))
           " >> $GITHUB_OUTPUT
-
-      - name: Run Semrush collector
-        run: |
-          INPUT_SLUG="${{ github.event.inputs.client_slug }}"
-          if [ -n "$INPUT_SLUG" ]; then
-            python collectors/semrush_collector.py "$INPUT_SLUG"
-          else
-            echo '${{ steps.get-clients.outputs.clients }}' | python -c "
-          import sys, json, subprocess
-          clients = json.load(sys.stdin)
-          for slug in clients:
-              subprocess.run(['python', 'collectors/semrush_collector.py', slug], check=False)
-            "
-          fi
 
       - name: Run News collector
         run: |
