@@ -89,7 +89,7 @@ def type_badge(type_: str) -> tuple[str, str]:
     return icons.get(type_, ("⚪", "#888"))
 
 
-def build_html(data: dict) -> str:
+def build_html(data: dict, client_slug: str = "mattress-warehouse") -> str:
     score = data["pressure_score"]
     color = score_color(score)
     week = data["week_of"]
@@ -127,10 +127,10 @@ def build_html(data: dict) -> str:
 
     # Component scores
     comps = [
-        ("Organic", pc.get("organic_search", 0)),
-        ("Paid", pc.get("paid_search", 0)),
-        ("Content", pc.get("content_velocity", 0)),
-        ("Social", pc.get("social_buzz", 0)),
+        ("Social", pc.get("social_content_investment", 0)),
+        ("Owned", pc.get("owned_channel_activity", 0)),
+        ("Paid", pc.get("paid_investment", 0)),
+        ("Search", pc.get("search_presence", 0)),
     ]
     comps_html = "".join([
         f'<td style="text-align:center;padding:0 12px;">'
@@ -215,7 +215,7 @@ def build_html(data: dict) -> str:
         <tr>
           <td style="background:#f7f9fc;border-radius:10px;padding:20px 24px;text-align:center;">
             <p style="font-family:sans-serif;font-size:13px;color:#555;margin:0 0 14px;">View the full interactive briefing including keyword movements, web changes, and demand trends.</p>
-            <a href="https://jackwam47-dotcom.github.io/scout/" style="display:inline-block;background:#3C6E71;color:#F6EDE6;font-family:sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:12px 28px;border-radius:6px;text-decoration:none;">Open Scout Dashboard</a>
+            <a href="https://parallelpath-dev.github.io/scout/?client={client_slug}" style="display:inline-block;background:#3C6E71;color:#F6EDE6;font-family:sans-serif;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;padding:12px 28px;border-radius:6px;text-decoration:none;">Open Scout Dashboard</a>
           </td>
         </tr>
       </table>
@@ -254,7 +254,7 @@ def send_digest(client_slug: str):
         print(f"[email] ERROR: No briefing found for {client_slug}")
         return
 
-    html = build_html(data)
+    html = build_html(data, client_slug)
     subject = f"Scout: {data['client_name']} — Competitive Pressure {data['pressure_score']}/100 · Week of {data['week_of']}"
 
     resp = requests.post(
