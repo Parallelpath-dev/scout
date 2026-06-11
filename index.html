@@ -974,15 +974,15 @@ function renderMetaAds(metaAds) {
         </div>
         <span class="col-note">${comp.ads_sampled||20} sampled</span>
       </div>
-      ${hasReal ? `<div class="ad-rows">${ads.filter(a=>a.body_text && !a.body_text.includes('{{')).map(ad=>`<div class="ad-row">
-        <div class="ad-row__body">${esc(ad.body_text?.slice(0,120))}${ad.body_text?.length>120?'…':''}</div>
+      ${hasReal ? `<div class="ad-rows">${ads.filter(a=>a.body_text).map(ad=>{const cleanBody=ad.body_text.replace(/\{\{[^}]*\}\}/g,'[…]');return `<div class="ad-row">
+        <div class="ad-row__body">${esc(cleanBody.slice(0,120))}${cleanBody.length>120?'…':''}</div>
         <div class="ad-row__meta">
           <span class="ad-format-pill">${ad.display_format||'UNKNOWN'}</span>
           ${ad.has_video?'<span class="ad-format-pill ad-format-pill--video">VIDEO</span>':''}
           ${ad.branded_content?'<span class="ad-format-pill ad-format-pill--ugc">UGC</span>':''}
           ${ad.start_date?`<span class="col-note">${ad.start_date.slice(0,10)}</span>`:''}
         </div>
-      </div>`).join('')}</div>`
+      </div>`}).join('')}</div>`
       : `<div class="empty-state empty-state--inline">Creative data will populate after next collection run.</div>`}
     </div>`
   }).join('')
