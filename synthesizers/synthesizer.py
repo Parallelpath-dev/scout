@@ -369,6 +369,8 @@ Three hard rules:
    formats (DCO, video, carousel, image), UGC vs. brand content, and funnel stage 
    (awareness/Prospecting vs. conversion/retargeting visible in UTM campaign names).
 
+IMPORTANT — Non-redundancy rule: The Analyst's intelligence is already in the briefing and will be displayed alongside your output. Your job is to ADD strategic value, not restate findings. When referencing Analyst data, use a brief phrase (e.g. "Mattress Firm's 3-email week at 60% off") as context for your recommendation — never re-describe what the Analyst already documented.
+
 Output format: Always respond with valid JSON matching the schema provided."""
 
 
@@ -562,7 +564,7 @@ Produce strategic recommendations as JSON:
     {{
       "competitor": "<name>",
       "platform": "<platform>",
-      "observation": "<what their content activity shows>",
+      "observation": "<1-sentence reference to the Analyst finding — do not restate it>",
       "content_theme": "<dominant theme observed>",
       "recommended_response": "<specific content action for {client_name}>",
       "advisor_role": "<role title>"
@@ -571,7 +573,7 @@ Produce strategic recommendations as JSON:
   "paid_recommendations": [
     {{
       "competitor": "<name>",
-      "observation": "<what the paid data shows>",
+      "observation": "<1-sentence reference to the Analyst finding — do not restate it>",
       "implication": "<what this means for {client_name}>",
       "recommended_action": "<specific paid media action>",
       "advisor_role": "<role title>"
@@ -579,7 +581,7 @@ Produce strategic recommendations as JSON:
   ],
   "search_recommendations": [
     {{
-      "observation": "<what the keyword data shows>",
+      "observation": "<1-sentence reference to the Analyst finding — do not restate it>",
       "opportunity": "<specific keyword or content gap>",
       "recommended_action": "<specific SEO or content action>",
       "advisor_role": "<role title>"
@@ -588,7 +590,7 @@ Produce strategic recommendations as JSON:
   "brand_campaign_alerts": [
     {{
       "competitor": "<name>",
-      "campaign_summary": "<what the campaign appears to be>",
+      "campaign_summary": "<1-sentence reference to the Analyst's brand_campaign_signal — do not restate evidence>",
       "threat_level": "high|medium|low",
       "recommended_response": "<specific action for {client_name}>",
       "advisor_role": "<role title>"
@@ -598,8 +600,8 @@ Produce strategic recommendations as JSON:
     {{
       "competitor": "<name>",
       "signal_type": "web_change|email|content",
-      "observation": "<what was detected>",
-      "implication": "<what this signals>",
+      "observation": "<1-sentence reference to the Analyst finding — do not restate it>",
+      "implication": "<strategic implication only — what it means for {client_name}, not what happened>",
       "recommended_action": "<specific response if warranted>"
     }}
   ],
@@ -614,7 +616,8 @@ Rules:
 - alert = immediate threats, watch = trends to monitor, opportunity = gaps to exploit
 - Every recommended_action must be realistic for a digital marketing agency scope
 - Always use role titles, never advisor names
-- Brand campaign alerts should only appear if the Analyst flagged brand_campaign_signals"""
+- Brand campaign alerts should only appear if the Analyst flagged brand_campaign_signals
+- NON-REDUNDANCY: The Analyst output is displayed alongside yours. Never restate facts, metrics, or descriptions the Analyst already provided. Your observation fields should be a brief reference (under 20 words) that gives context for the recommendation — the recommendation is the value you add."""
 
 
 # ── Advisor Activation ────────────────────────────────────────────────────────
