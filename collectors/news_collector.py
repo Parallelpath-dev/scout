@@ -58,10 +58,11 @@ def build_queries(comp_name: str, comp_domain: str, generic_names: set = None) -
     generic_names = generic_names or DEFAULT_GENERIC_NAMES
     name = comp_name.lower()
     if name in generic_names:
+        top_qualifiers = [q for q in qualifiers if q != ".com"][:3]
         return [
-            f'"{comp_name}" mattress',
-            f'"{comp_name}" sleep',
-            f'"{comp_name}" mattress company',
+            f'"{comp_name}" {top_qualifiers[0]}' if len(top_qualifiers) > 0 else comp_name,
+            f'"{comp_name}" {top_qualifiers[1]}' if len(top_qualifiers) > 1 else comp_name,
+            f'"{comp_name}" {top_qualifiers[2]} company' if len(top_qualifiers) > 2 else comp_name,
         ]
     else:
         return [
