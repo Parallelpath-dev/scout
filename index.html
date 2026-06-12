@@ -804,6 +804,7 @@ function renderAll(d) {
   document.getElementById('sidebar-week').textContent = 'Week of ' + (meta.weekOf ? new Date(meta.weekOf).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '—')
   document.getElementById('topbar-client').textContent = (meta.clientName || 'Mattress Warehouse') + ' — Competitive Intelligence'
   document.querySelector('.js-client-name').textContent = meta.clientName || 'Mattress Warehouse'
+  document.getElementById('sidebar-client-label').textContent = meta.clientName || 'Client'
 
   renderOverview(d)
   renderSearchIntelligence(d)
@@ -911,9 +912,9 @@ function renderKeywordTable(keywords) {
   const competitors = Object.keys(keywords[0]?.competitor_positions||{})
   const posCell = p => p==null ? `<span class="pos pos--none">—</span>` : p<=10 ? `<span class="pos pos--high">${p}</span>` : p<=30 ? `<span class="pos pos--mid">${p}</span>` : `<span class="pos pos--low">${p}</span>`
   card.innerHTML = `
-    ${!hasAny ? `<div class="data-gap-notice">Keyword position data is not yet populating from Semrush. GSC integration will establish MW baseline tracking — see Search Recommendations below.</div>` : ''}
+    ${!hasAny ? `<div class="data-gap-notice">Keyword position data is not yet populating from Semrush — see Search Recommendations below.</div>` : ''}
     <table class="data-table">
-      <thead><tr><th>Keyword</th><th class="col-weight">Volume</th><th>Mattress Warehouse</th>${competitors.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <thead><tr><th>Keyword</th><th class="col-weight">Volume</th><th>${esc(document.getElementById('sidebar-client-label')?.textContent || 'Client')}</th>${competitors.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
       <tbody>${keywords.map(k=>`<tr>
         <td class="keyword-cell">${k.keyword}</td>
         <td class="col-weight col-note">${k.volume!=null?Number(k.volume).toLocaleString():'—'}</td>
@@ -943,9 +944,10 @@ function renderKeywordMovements(movements) {
   const c = document.getElementById('keyword-movements-container')
   const s = document.getElementById('keyword-movements-section')
   if (!c) return
-  if (!movements.length) { if(s) s.style.display='none'; return }
+  const filtered = movements.filter(m => m.position_change && m.position_change !== 0)
+  if (!filtered.length) { if(s) s.style.display='none'; return }
   if(s) s.style.display='block'
-  c.innerHTML = movements.map(m=>`<div class="signal-card">
+  c.innerHTML = filtered.map(m=>`<div class="signal-card">
     ${m.keyword?`<div class="signal-card__title">${m.keyword}</div>`:''}
     ${m.competitor?`<span class="competitor-tag">${m.competitor}</span>`:''}
     ${m.movement||m.observation?`<div class="signal-card__body">${m.movement||m.observation}</div>`:''}
