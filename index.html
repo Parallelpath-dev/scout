@@ -899,26 +899,30 @@ function renderPressureTrend(history) {
 
 // ── SEARCH INTELLIGENCE ───────────────────────────────────────────────────────
 function renderSearchIntelligence(d) {
-  renderKeywordTable(d.keywordComparison || [])
+  renderKeywordTable(d.keywordComparison || [], d.meta?.storeBrands || [])
   renderGoogleTrends(d.keywordComparison || [])
   renderKeywordMovements(d.keywordMovements || [])
   renderSearchRecs(d.searchRecommendations || [])
 }
 
-function renderKeywordTable(keywords) {
+function renderKeywordTable(keywords, storeBrands) {
   const card = document.getElementById('keyword-table-card')
   if (!card || !keywords.length) { if(card) card.innerHTML=`<div class="empty-state">No keyword data available.</div>`; return }
-  const hasAny = keywords.some(k => k.client_position!=null || Object.values(k.competitor_positions||{}).some(v=>v!=null))
+  const hasAny = keywords.some(k => k.client_position!=null || k.secondary_position!=null || Object.values(k.competitor_positions||{}).some(v=>v!=null))
   const competitors = Object.keys(keywords[0]?.competitor_positions||{})
+  const hasSecondary = keywords.some(k => k.secondary_position != null) || (storeBrands && storeBrands.length > 1)
+  const primaryLabel = storeBrands && storeBrands[0] ? storeBrands[0].replace('.com','').replace('www.','') : (document.getElementById('sidebar-client-label')?.textContent || 'Client')
+  const secondaryLabel = storeBrands && storeBrands[1] ? storeBrands[1].replace('.com','').replace('www.','') : ''
   const posCell = p => p==null ? `<span class="pos pos--none">—</span>` : p<=10 ? `<span class="pos pos--high">${p}</span>` : p<=30 ? `<span class="pos pos--mid">${p}</span>` : `<span class="pos pos--low">${p}</span>`
   card.innerHTML = `
     ${!hasAny ? `<div class="data-gap-notice">Keyword position data is not yet populating from Semrush — see Search Recommendations below.</div>` : ''}
     <table class="data-table">
-      <thead><tr><th>Keyword</th><th class="col-weight">Volume</th><th>${esc(document.getElementById('sidebar-client-label')?.textContent || 'Client')}</th>${competitors.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
+      <thead><tr><th>Keyword</th><th class="col-weight">Volume</th><th>${esc(primaryLabel)}</th>${hasSecondary?`<th>${esc(secondaryLabel)}</th>`:''}${competitors.map(c=>`<th>${c}</th>`).join('')}</tr></thead>
       <tbody>${keywords.map(k=>`<tr>
         <td class="keyword-cell">${k.keyword}</td>
         <td class="col-weight col-note">${k.volume!=null?Number(k.volume).toLocaleString():'—'}</td>
         <td>${posCell(k.client_position)}</td>
+        ${hasSecondary?`<td>${posCell(k.secondary_position)}</td>`:''}
         ${competitors.map(c=>`<td>${posCell(k.competitor_positions?.[c])}</td>`).join('')}
       </tr>`).join('')}</tbody>
     </table>
