@@ -1,0 +1,52 @@
+# CodeRabbit configuration for Scout — Parallel Path competitive intelligence platform
+# Focus: stability and multi-client readiness
+
+language: en
+reviews:
+  profile: assertive
+  auto_review:
+    enabled: true
+  path_filters:
+    - "!MW_Executive_Report_V3.html"
+  path_instructions:
+    - path: "synthesizers/**"
+      instructions: |
+        This is the core synthesis engine. Two-call Claude API architecture (Analyst + Strategist).
+        Focus on:
+        - JSON parsing robustness — what happens if Claude returns malformed JSON or hits max_tokens mid-output?
+        - Error handling and graceful degradation when signal categories are empty or missing
+        - Hardcoded client references (Mattress Warehouse) that should be parameterized for multi-client use
+        - Token estimation accuracy and context window safety
+        - The upsert pattern on briefings(client_id, week_of) — race conditions or data integrity risks
+    - path: "collectors/**"
+      instructions: |
+        These are weekly data collectors (Semrush, news, web changes, social/Apify, Reddit).
+        Focus on:
+        - Hardcoded client/competitor values that should come from Supabase config
+        - Error handling when external APIs (Apify, Google News RSS) fail or return unexpected formats
+        - Rate limiting and retry logic
+        - Data validation before writing to Supabase signals table
+    - path: "builders/**"
+      instructions: |
+        Email digest builder and dashboard builder.
+        Focus on:
+        - Hardcoded recipients or client references
+        - Email formatting robustness
+    - path: ".github/workflows/**"
+      instructions: |
+        GitHub Actions workflows for weekly collection and synthesis.
+        Focus on:
+        - Secret usage and security
+        - Error handling — does a single collector failure stop the entire pipeline?
+        - Multi-client extensibility — can these workflows run for multiple clients?
+    - path: "index.html"
+      instructions: |
+        Single-page dashboard app (vanilla JS, no framework). Fetches from Supabase Edge Function.
+        Focus on:
+        - Hardcoded API URLs or client slugs that should be parameterized
+        - Error handling when Edge Function returns errors or partial data
+        - XSS risks from rendering API data into DOM
+        - Accessibility basics
+        Do NOT flag: CSS styling choices, design opinions, or framework recommendations.
+chat:
+  auto_reply: true
