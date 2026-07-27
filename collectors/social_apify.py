@@ -29,7 +29,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ── Apify API Helpers ─────────────────────────────────────────────────────────
 
-def run_actor(actor_id: str, input_data: dict, timeout_secs: int = 120) -> list:
+def run_actor(actor_id: str, input_data: dict, timeout_secs: int = 240) -> list:
     """
     Run an Apify actor synchronously and return the results.
     Waits for completion up to timeout_secs.
