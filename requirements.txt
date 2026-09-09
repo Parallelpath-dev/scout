@@ -1,4 +1,4 @@
-anthropic==X.Y.Z
+anthropic==0.125.0
 supabase>=2.4.0
 rdt-cli>=0.1.0
 feedparser>=6.0.11
