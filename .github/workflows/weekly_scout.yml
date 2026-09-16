@@ -1,5 +1,3 @@
-name: Scout Weekly Intelligence Run
-
 on:
   schedule:
     - cron: '0 7 * * 1'
@@ -16,12 +14,12 @@ env:
   ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
   YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
   APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
-  
+
 
 jobs:
   collect-and-synthesize:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -33,11 +31,14 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r requirements.txt google-cloud-bigquery
 
       - name: Install Playwright
         run: playwright install chromium
-        
+
+      - name: Write GCP credentials
+        run: echo '${{ secrets.GCP_SA_KEY }}' > gcp-key.json
+
       - name: Get active clients
         id: get-clients
         run: |
@@ -63,7 +64,7 @@ jobs:
               subprocess.run(['python', 'collectors/news_collector.py', slug], check=False)
             "
           fi
-          
+
       - name: Run Web Change detector
         run: |
           INPUT_SLUG="${{ github.event.inputs.client_slug }}"
@@ -79,6 +80,8 @@ jobs:
           fi
 
       - name: Run Apify social collector
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: gcp-key.json
         run: |
           INPUT_SLUG="${{ github.event.inputs.client_slug }}"
           if [ -n "$INPUT_SLUG" ]; then
