@@ -9,22 +9,100 @@ Actors used:
 - apify/facebook-posts-scraper
 - apify/facebook-ads-scraper
 - streamers/youtube-scraper
+
+Storage:
+- Client/competitor config is read from Supabase (reference data).
+- Collected signals are dual-written to both Supabase (unchanged, still feeds
+  the Scout client-facing tool) and BigQuery (new, being validated). Once
+  BigQuery is verified and Scout is cut over, remove the save_signal() calls
+  to drop Supabase.
 """
 
 import os
 import json
 import time
+import uuid
 import requests
 from datetime import datetime, timedelta
 from supabase import create_client, Client
+from google.cloud import bigquery
+from google.api_core.exceptions import NotFound
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 APIFY_API_KEY = os.environ.get("APIFY_API_KEY")
 
+# BigQuery destination
+BQ_PROJECT_ID = os.environ.get("BQ_PROJECT_ID", "parallel-path-446720")
+BQ_DATASET = os.environ.get("BQ_DATASET", "client_internal_rawdata")
+BQ_TABLE = os.environ.get("BQ_TABLE", "PP_Apify_Platform_Ads_Org_Scout")
+BQ_LOCATION = os.environ.get("BQ_LOCATION", "US")
+
 APIFY_BASE = "https://api.apify.com/v2"
 
+# Auth: relies on Application Default Credentials. Either:
+#   export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+# or run in an environment that already has ADC configured (gcloud auth
+# application-default login, a GCP-hosted runner, etc.)
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+bq_client = bigquery.Client(project=BQ_PROJECT_ID)
+
+BQ_TABLE_ID = f"{BQ_PROJECT_ID}.{BQ_DATASET}.{BQ_TABLE}"
+
+BQ_SCHEMA = [
+    bigquery.SchemaField("signal_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("client_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("client_slug", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("competitor_id", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("competitor_name", "STRING", mode="NULLABLE"),
+    bigquery.SchemaField("signal_type", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("source", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("data", "JSON", mode="NULLABLE"),
+    bigquery.SchemaField("collected_at", "TIMESTAMP", mode="REQUIRED"),
+]
+
+
+# ── BigQuery Setup ─────────────────────────────────────────────────────────────
+
+def ensure_bq_table_exists():
+    """Create the dataset/table if they don't exist yet (first-run bootstrap)."""
+    dataset_ref = f"{BQ_PROJECT_ID}.{BQ_DATASET}"
+    try:
+        bq_client.get_dataset(dataset_ref)
+    except NotFound:
+        print(f"[bigquery] Creating dataset {dataset_ref}")
+        dataset = bigquery.Dataset(dataset_ref)
+        dataset.location = BQ_LOCATION
+        bq_client.create_dataset(dataset)
+
+    try:
+        bq_client.get_table(BQ_TABLE_ID)
+    except NotFound:
+        print(f"[bigquery] Creating table {BQ_TABLE_ID}")
+        table = bigquery.Table(BQ_TABLE_ID, schema=BQ_SCHEMA)
+        table.time_partitioning = bigquery.TimePartitioning(
+            type_=bigquery.TimePartitioningType.DAY,
+            field="collected_at",
+        )
+        bq_client.create_table(table)
+
+
+def insert_signals_batch(rows: list):
+    """Load a batch of signal rows into BigQuery in a single job (no streaming cost)."""
+    if not rows:
+        print("[bigquery] No signals to insert, skipping")
+        return
+
+    job_config = bigquery.LoadJobConfig(
+        schema=BQ_SCHEMA,
+        source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+    )
+
+    load_job = bq_client.load_table_from_json(rows, BQ_TABLE_ID, job_config=job_config)
+    load_job.result()  # wait for completion, raises on failure
+
+    print(f"[bigquery] Inserted {len(rows)} signal rows into {BQ_TABLE_ID}")
 
 
 # ── Apify API Helpers ─────────────────────────────────────────────────────────
@@ -402,7 +480,7 @@ def collect_youtube(channel_id: str) -> dict:
         return {}
 
 
-# ── Supabase Storage ──────────────────────────────────────────────────────────
+# ── Supabase Config Lookups (unchanged — still the source of client/competitor reference data) ──
 
 def get_client_id(slug: str) -> str | None:
     result = supabase.table("clients").select("id").eq("slug", slug).single().execute()
@@ -422,6 +500,7 @@ def get_competitor_id(client_id: str, name: str) -> str | None:
 
 
 def save_signal(client_id: str, competitor_id: str, signal_type: str, data: dict):
+    """Original Supabase write — kept during the dual-write transition period."""
     supabase.table("signals").insert({
         "client_id": client_id,
         "competitor_id": competitor_id,
@@ -432,11 +511,31 @@ def save_signal(client_id: str, competitor_id: str, signal_type: str, data: dict
     }).execute()
 
 
+# ── BigQuery Row Builder ──────────────────────────────────────────────────────
+
+def build_signal_row(client_id: str, client_slug: str, competitor_id: str,
+                      competitor_name: str, signal_type: str, data: dict) -> dict:
+    """Shape one signal as a BigQuery row (JSON-safe, ready for load_table_from_json)."""
+    return {
+        "signal_id": str(uuid.uuid4()),
+        "client_id": client_id,
+        "client_slug": client_slug,
+        "competitor_id": competitor_id,
+        "competitor_name": competitor_name,
+        "signal_type": signal_type,
+        "source": "apify",
+        "data": json.dumps(data, default=str),
+        "collected_at": datetime.utcnow().isoformat(),
+    }
+
+
 # ── Main Collection Flow ──────────────────────────────────────────────────────
 
 def collect_for_client(client_slug: str):
     """Run full Apify social collection for a client and all competitors."""
     print(f"[apify] Starting social collection for: {client_slug}")
+
+    ensure_bq_table_exists()
 
     client_id = get_client_id(client_slug)
     if not client_id:
@@ -446,6 +545,8 @@ def collect_for_client(client_slug: str):
     result = supabase.table("clients").select("config").eq("id", client_id).single().execute()
     config = result.data.get("config", {})
     competitors = config.get("competitors", [])
+
+    signal_rows = []
 
     for comp in competitors:
         name = comp.get("name")
@@ -462,6 +563,7 @@ def collect_for_client(client_slug: str):
             data = collect_instagram(comp["instagram_handle"])
             if data:
                 save_signal(client_id, comp_id, "instagram_apify", data)
+                signal_rows.append(build_signal_row(client_id, client_slug, comp_id, name, "instagram_apify", data))
                 print(f"[apify]   Instagram: {data.get('posts_last_30d')} posts last 30d")
 
         # TikTok
@@ -469,6 +571,7 @@ def collect_for_client(client_slug: str):
             data = collect_tiktok(comp["tiktok_handle"])
             if data:
                 save_signal(client_id, comp_id, "tiktok", data)
+                signal_rows.append(build_signal_row(client_id, client_slug, comp_id, name, "tiktok", data))
                 print(f"[apify]   TikTok: {data.get('posts_last_30d')} posts last 30d")
 
         # Facebook Posts
@@ -476,12 +579,14 @@ def collect_for_client(client_slug: str):
             data = collect_facebook_posts(comp["facebook_page"])
             if data:
                 save_signal(client_id, comp_id, "facebook_posts", data)
+                signal_rows.append(build_signal_row(client_id, client_slug, comp_id, name, "facebook_posts", data))
                 print(f"[apify]   Facebook: {data.get('posts_last_30d')} posts last 30d")
 
         # Meta Ads Library
         data = collect_facebook_ads(name, comp.get("meta_ads_url", "")) if comp.get("meta_ads_url") else None
         if data:
             save_signal(client_id, comp_id, "meta_ads", data)
+            signal_rows.append(build_signal_row(client_id, client_slug, comp_id, name, "meta_ads", data))
             print(f"[apify]   Meta Ads: {data.get('total_active_ads')} active ads")
 
         # YouTube
@@ -489,7 +594,10 @@ def collect_for_client(client_slug: str):
             data = collect_youtube(comp["youtube_channel_id"])
             if data:
                 save_signal(client_id, comp_id, "youtube_apify", data)
+                signal_rows.append(build_signal_row(client_id, client_slug, comp_id, name, "youtube_apify", data))
                 print(f"[apify]   YouTube: {data.get('uploads_14d')} uploads last 14d")
+
+    insert_signals_batch(signal_rows)
 
     print(f"[apify] Done: {client_slug}")
 
