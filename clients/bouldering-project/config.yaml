@@ -1,0 +1,149 @@
+# Scout — The Bouldering Project
+#
+# Every id below was resolved and verified 11 September 2026. Nothing here needs a lookup.
+#
+# TWO THINGS THAT FAIL SILENTLY IF EDITED CARELESSLY
+#
+# 1. view_all_page_id must be the CLASSIC Facebook page id. Facebook exposes two numbers
+#    per page and the profile-style one (starting 1000...) is what most scrapers return.
+#    It returns an EMPTY Ad Library result rather than an error, so a wrong id looks
+#    exactly like a quiet week. To re-derive one: open the Meta Ad Library, search the
+#    page, read view_all_page_id out of the resulting URL.
+#
+# 2. Ads are sourced from the CORPORATE page for every brand here. Verified against a live
+#    query: not one local page in this set runs a single Meta ad, with an Equinox control
+#    returning 325 to prove the query itself works. Organic social is sourced locally
+#    wherever a real location account exists, because that is where DC content is posted.
+#    Monitoring level is set per signal, not per brand.
+
+client:
+  name: "The Bouldering Project"
+  slug: "bouldering-project"
+  domain: "boulderingproject.com"
+  vertical: "fitness"
+
+competitors:
+  # Movement — the format twin. Closest full climbing gym, 14 min effective travel.
+  - name: "Movement"
+    domain: "movementgyms.com"
+    brand_terms: ["movement", "movement gyms", "movement climbing", "movement crystal city"]
+    instagram_handle: "movementgymsdmv"      # DMV regional, not local
+    tiktok_handle: "movementgyms"            # corporate
+    facebook_page: "movementgymscrystalcity" # local, for organic
+    youtube_channel_id: "UCykbSnimHBWsvq-ndDkCzpQ"
+    meta_ads_url: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&is_targeted_country=false&media_type=all&search_type=page&sort_data[direction]=desc&sort_data[mode]=total_impressions&view_all_page_id=39916060837"
+    max_ads: 200          # 118 active on 11 Sep. Headroom without being a blank cheque.
+    watch_pages:
+      - "https://movementgyms.com/crystal-city/"
+      - "https://movementgyms.com/memberships-passes/"   # they price by home gym
+
+  # Sportrock — the price undercutter. Lightest advertiser in the set.
+  - name: "Sportrock Climbing Centers"
+    domain: "sportrock.com"
+    brand_terms: ["sportrock", "sportrock climbing", "sportrock climbing centers", "sportrock alexandria"]
+    instagram_handle: "sportrock"            # corporate, no location account exists
+    # tiktok: NONE. @sportrock is an unrelated account, 17 followers, bio "music is life".
+    # youtube: NONE. Confirmed no channel exists.
+    facebook_page: "srclimbing"              # NOT "sportrock", which is an Israeli retailer
+    meta_ads_url: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&is_targeted_country=false&media_type=all&search_type=page&sort_data[direction]=desc&sort_data[mode]=total_impressions&view_all_page_id=150493844961024"
+    max_ads: 100          # 17 active on 11 Sep.
+    watch_pages:
+      - "https://sportrock.com/alexandria"
+      - "https://sportrock.com/membership"
+
+  # YMCA Anthony Bowen — value substitute with a wall. 3 min out, closest competitor.
+  # Organic at branch level, ads at metro level: the branch runs none.
+  - name: "YMCA Anthony Bowen"
+    domain: "ymcadc.org"
+    brand_terms: ["ymca anthony bowen", "anthony bowen ymca", "ymca dc", "ymca of metropolitan washington"]
+    instagram_handle: "ymcabowen"
+    # tiktok: @ymcadc exists with 0 followers and 0 videos, created ~July 2026.
+    # Ownership rests on bio text alone. Unusable.
+    facebook_page: "YMCABowen"               # more followers than the metro parent
+    youtube_channel_id: "UCzROw5yaDT9JgHi2z3q95aw"   # metro parent, no branch channel
+    meta_ads_url: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&is_targeted_country=false&media_type=all&search_type=page&sort_data[direction]=desc&sort_data[mode]=total_impressions&view_all_page_id=1873156419582688"
+    max_ads: 100          # 13 active on 11 Sep.
+    watch_pages:
+      - "https://ymcadc.org/branch.cfm?bid=01"
+
+  # VIDA Fitness — the 14th St corridor competitor. Closest price match, no climbing.
+  - name: "VIDA Fitness"
+    domain: "vidafitness.com"
+    brand_terms: ["vida fitness", "vidafitness", "vida u street"]
+    instagram_handle: "vidafitnessdc"        # corporate, no U Street account
+    tiktok_handle: "vidafitnessdc"           # low activity, last post Feb 2026
+    facebook_page: "VIDAFitness"
+    # The only U Street Facebook presence is an auto-generated unclaimed place page
+    # (213455905395031, 0 followers). Do not monitor it.
+    youtube_channel_id: "UCQzHm9Kp8DBBpnr6DcEvW4w"
+    meta_ads_url: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&is_targeted_country=false&media_type=all&search_type=page&sort_data[direction]=desc&sort_data[mode]=total_impressions&view_all_page_id=220098116012"
+    max_ads: 100          # 35 active on 11 Sep.
+    watch_pages:
+      - "https://vidafitness.com/locations/u-street/"
+      - "https://vidafitness.com/membership/options/"
+
+  # Onelife Fitness — full service at half price, and the market's dominant advertiser.
+  # 367 active ads is more than Equinox. No other competitor is close.
+  - name: "Onelife Fitness"
+    domain: "onelifefitness.com"
+    brand_terms: ["onelife fitness", "onelife", "onelifefit", "onelife tenleytown"]
+    instagram_handle: "onelifetenley"        # Tenleytown branch
+    tiktok_handle: "onelifefit"              # corporate, dormant since July 2024
+    facebook_page: "onelifefitnessnorthwest" # this IS Tenleytown despite the slug
+    youtube_channel_id: "UCYDBapRRlf5cBaQMsq43j0g"
+    meta_ads_url: "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=US&is_targeted_country=false&media_type=all&search_type=page&sort_data[direction]=desc&sort_data[mode]=total_impressions&view_all_page_id=300826405901"
+    # 367 active on 11 Sep. This is the one that matters: at the default 35 we would be
+    # describing this page with 9.5% of its ads, and because the library sorts by
+    # impressions it is the top 9.5% by spend rather than a random draw. Every
+    # DC-referencing share for this brand would be a statement about their biggest
+    # campaigns, presented as a statement about their market.
+    max_ads: 500
+    watch_pages:
+      - "https://onelifefitness.com/gyms/tenleytown"
+      - "https://onelifefitness.com/gyms-washington-dc"
+
+# Three of five competitor names are ordinary English words, the highest generic-name load
+# of any Scout client. "Movement" is both a common noun and a political term and will bury
+# the feed unqualified. Require a qualifier alongside every generic name.
+news:
+  generic_names: ["movement", "vida", "onelife"]
+  qualifiers:
+    - "climbing"
+    - "bouldering"
+    - "climbing gym"
+    - "rock climbing"
+    - "gym"
+    - "fitness"
+    - "yoga"
+    - "health club"
+    - "fitness center"
+    - "indoor climbing"
+  blocked_sources: []
+
+semrush:
+  database: "us"
+  organic_limit: 50
+  paid_limit: 25
+  # Position Tracking must be geo-targeted to Washington DC as a CITY (Semrush id
+  # 1014895). "District of Columbia" (21140) is typed as a STATE and offers no local
+  # volume type, and seven of the ten tracked terms are "near me".
+  position_tracking_location: "Washington, District of Columbia"
+  position_tracking_location_id: 1014895
+
+# Volumes below are US national, from the onboarding brief. A DC-targeted tracker reports
+# a fraction of them. Quote DC volumes in anything client-facing, or quote none.
+tracked_keywords:
+  - "rock climbing near me"        # 49,500 / KD 65 — the primary battleground
+  - "rock climbing gym"            # 33,100 / KD 54
+  - "bouldering"                   # 33,100 / KD 52 — the format term they own by name
+  - "climbing gym near me"         # 22,200 / KD 70
+  - "rock climbing gym near me"    #  9,900 / KD 50
+  - "bouldering near me"           #  6,600 / KD 57
+  - "bouldering gym near me"       #  2,900 / KD 65 — retained at Jackson's call
+  - "fitness classes near me"      # 14,800 / KD 18 — replaced "gym near me"
+  - "yoga near me"                 # 165,000 / KD 67
+  - "gym with sauna near me"       #  9,900 / KD 15 — the wedge, lowest difficulty in set
+
+notifications:
+  slack_webhook: ""
+  email: ""

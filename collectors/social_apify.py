@@ -309,12 +309,30 @@ def collect_facebook_posts(page_name: str) -> dict:
         return {}
 
 
-def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
-    """Scrape Meta Ads Library for active competitor ads."""
+# How many ads to pull per page. The Ad Library is sorted impressions_desc, so a capped
+# pull is the TOP N by spend, not a random sample. That is fine for a rough activity
+# level and wrong for any rate computed off it.
+#
+# 35 was hardcoded here and in the slice below. It is kept as the default so no existing
+# client's cost changes, but it is now overridable per competitor, because a page running
+# 367 ads read 35 at a time is being described by 9.5% of its output.
+DEFAULT_MAX_ADS = 35
+
+
+def collect_facebook_ads(
+    competitor_name: str, meta_ads_url: str, max_ads: int = DEFAULT_MAX_ADS
+) -> dict:
+    """Scrape Meta Ads Library for active competitor ads.
+
+    max_ads caps the pull. Set it per competitor via `max_ads` on the competitor record
+    when the page runs more ads than the default and the geographic mix of the whole page
+    matters, which is the case for any client whose briefing reports a share rather than
+    a count.
+    """
     try:
         results = run_actor("curious_coder/facebook-ads-library-scraper", {
             "urls": [{"url": meta_ads_url}],
-            "count": 35,
+            "count": max_ads,
             "scrapeAdDetails": False,
             "scrapePageAds.activeStatus": "active",
             "scrapePageAds.countryCode": "US",
@@ -326,7 +344,7 @@ def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
 
         ads = []
 
-        for ad in results[:35]:
+        for ad in results[:max_ads]:
             snapshot = ad.get("snapshot") or {}
             cards = snapshot.get("cards") or []
             videos = snapshot.get("videos") or []
@@ -410,12 +428,27 @@ def collect_facebook_ads(competitor_name: str, meta_ads_url: str) -> dict:
 
         active_ads = [a for a in ads if a.get("is_active")]
 
+        total_available = results[0].get("total") if results else None
+
         return {
             "platform": "meta_ads",
             "competitor": competitor_name,
+            # NAME IS MISLEADING, kept for backward compatibility with existing rows and
+            # with synthesizer.py. This is how many of the PULLED ads were active, not
+            # how many the page is running. Under a cap it equals the cap.
+            # Use total_available_ads for the page total and ads_sampled below for the
+            # denominator the tier counts actually belong to.
             "total_active_ads": len(active_ads),
-            "total_available_ads": results[0].get("total") if results else None,
+            "total_available_ads": total_available,
             "ads_collected": len(ads),
+            # Explicit, so nothing downstream has to infer whether this is the whole page.
+            "ads_sampled": len(ads),
+            "max_ads_requested": max_ads,
+            "sample_method": (
+                "census"
+                if total_available is not None and len(ads) >= total_available
+                else "top_by_impressions"
+            ),
             "ads": ads,
             "collected_at": datetime.utcnow().isoformat(),
         }
@@ -583,11 +616,18 @@ def collect_for_client(client_slug: str):
                 print(f"[apify]   Facebook: {data.get('posts_last_30d')} posts last 30d")
 
         # Meta Ads Library
-        data = collect_facebook_ads(name, comp.get("meta_ads_url", "")) if comp.get("meta_ads_url") else None
+        data = collect_facebook_ads(
+            name,
+            comp.get("meta_ads_url", ""),
+            max_ads=int(comp.get("max_ads") or DEFAULT_MAX_ADS),
+        ) if comp.get("meta_ads_url") else None
         if data:
             save_signal(client_id, comp_id, "meta_ads", data)
             signal_rows.append(build_signal_row(client_id, client_slug, comp_id, name, "meta_ads", data))
-            print(f"[apify]   Meta Ads: {data.get('total_active_ads')} active ads")
+            print(
+                f"[apify]   Meta Ads: {data.get('ads_sampled')} of "
+                f"{data.get('total_available_ads')} ({data.get('sample_method')})"
+            )
 
         # YouTube
         if comp.get("youtube_channel_id"):
